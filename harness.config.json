@@ -1,6 +1,14 @@
 {
   "version": 1,
   "name": "lego-tracker",
+  "entropy": {
+    "excludePatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.harness/**",
+      "**/output/**"
+    ]
+  },
   "layers": [
     {
       "name": "types",
@@ -37,5 +45,11 @@
   "template": {
     "level": "basic",
     "version": 1
+  },
+  "telemetry": {
+    "enabled": true
+  },
+  "adoption": {
+    "enabled": true
   }
 }
