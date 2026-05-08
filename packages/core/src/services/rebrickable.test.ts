@@ -28,7 +28,6 @@ describe('Rebrickable Service', () => {
         })
       });
 
-      // @ts-ignore - function not yet implemented
       const item = await findRebrickableByBarcode('5702016913484');
       expect(item?.number).toBe('75312-1');
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('barcode=5702016913484'));

@@ -71,6 +71,14 @@ export async function searchRebrickable(query: string): Promise<LegoCatalogItem[
   ];
 }
 
+export async function findRebrickableByBarcode(barcode: string): Promise<LegoCatalogItem | null> {
+  const results = await fetchFromRebrickable('/sets/', { barcode: barcode.trim() });
+  if (results && results.length > 0) {
+    return mapToCatalogItem(results[0], 'set');
+  }
+  return null;
+}
+
 export async function findRebrickableItem(number: string, type: LegoItemType): Promise<LegoCatalogItem | null> {
   const { rebrickableApiKey } = getConfig();
   if (!rebrickableApiKey) return null;
