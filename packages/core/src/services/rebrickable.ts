@@ -29,6 +29,10 @@ async function fetchFromRebrickable(endpoint: string, params: Record<string, str
 
   try {
     const response = await fetch(`${BASE_URL}${endpoint}?${searchParams.toString()}`);
+    if (response.status === 429) {
+      console.warn('Rebrickable API rate limit exceeded');
+      return [];
+    }
     if (!response.ok) {
       return [];
     }
