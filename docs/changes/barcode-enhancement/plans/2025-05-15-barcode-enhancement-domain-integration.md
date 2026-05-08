@@ -28,8 +28,9 @@ Integrate multi-source barcode lookup (Seed -> Cache -> Rebrickable) into the `c
 
 **Depends on:** none | **Files:** `packages/core/src/services/supabase.ts`
 
-1.  Open `packages/core/src/services/supabase.ts`.
-2.  Add the following function after `getCachedItem`:
+1. Open `packages/core/src/services/supabase.ts`.
+2. Add the following function after `getCachedItem`:
+
     ```typescript
     export async function getCachedItemByBarcode(barcode: string): Promise<LegoCatalogItem | null> {
       const supabase = getClient();
@@ -58,40 +59,42 @@ Integrate multi-source barcode lookup (Seed -> Cache -> Rebrickable) into the `c
       };
     }
     ```
-3.  Run: `harness validate`
-4.  Commit: `feat(core): add getCachedItemByBarcode to supabase service`
+
+3. Run: `harness validate`
+4. Commit: `feat(core): add getCachedItemByBarcode to supabase service`
 
 ### Task 2: Create unit tests for Supabase service
 
 **Depends on:** Task 1 | **Files:** `packages/core/src/services/supabase.test.ts`
 
-1.  Create `packages/core/src/services/supabase.test.ts` with tests for `getCachedItemByBarcode`.
-2.  Mock `@supabase/supabase-js` to simulate successful and empty cache hits.
-3.  Run: `npx vitest packages/core/src/services/supabase.test.ts`
-4.  Run: `harness validate`
-5.  Commit: `test(core): add tests for getCachedItemByBarcode`
+1. Create `packages/core/src/services/supabase.test.ts` with tests for `getCachedItemByBarcode`.
+2. Mock `@supabase/supabase-js` to simulate successful and empty cache hits.
+3. Run: `npx vitest packages/core/src/services/supabase.test.ts`
+4. Run: `harness validate`
+5. Commit: `test(core): add tests for getCachedItemByBarcode`
 
 ### Task 3: Setup domain tests for `findByBarcode`
 
 **Depends on:** Task 1 | **Files:** `packages/core/src/domain/catalog.test.ts`
 
-1.  Create `packages/core/src/domain/catalog.test.ts`.
-2.  Add tests for `findByBarcode` covering:
+1. Create `packages/core/src/domain/catalog.test.ts`.
+2. Add tests for `findByBarcode` covering:
     - Hits in `seedCatalog`.
     - Miss in `seedCatalog`, hit in cache.
     - Miss in seed and cache, hit in Rebrickable (verify caching called).
     - Miss everywhere.
-3.  Mock `../services/supabase` and `../services/rebrickable`.
-4.  Run tests — observe failure for async/multi-source logic.
-5.  Commit: `test(core): add failing tests for enhanced findByBarcode`
+3. Mock `../services/supabase` and `../services/rebrickable`.
+4. Run tests — observe failure for async/multi-source logic.
+5. Commit: `test(core): add failing tests for enhanced findByBarcode`
 
 ### Task 4: Implement enhanced `findByBarcode`
 
 **Depends on:** Task 3 | **Files:** `packages/core/src/domain/catalog.ts`
 
-1.  Update `packages/core/src/domain/catalog.ts`.
-2.  Update imports to include `findRebrickableByBarcode` and `getCachedItemByBarcode`.
-3.  Implement the multi-source lookup logic in `findByBarcode`:
+1. Update `packages/core/src/domain/catalog.ts`.
+2. Update imports to include `findRebrickableByBarcode` and `getCachedItemByBarcode`.
+3. Implement the multi-source lookup logic in `findByBarcode`:
+
     ```typescript
     export async function findByBarcode(barcode: string): Promise<LegoCatalogItem | undefined> {
       const cleaned = barcode.trim();
@@ -115,14 +118,15 @@ Integrate multi-source barcode lookup (Seed -> Cache -> Rebrickable) into the `c
       return undefined;
     }
     ```
-4.  Run: `npx vitest packages/core/src/domain/catalog.test.ts` — observe pass.
-5.  Run: `harness validate`
-6.  Commit: `feat(core): implement multi-source lookup in findByBarcode`
+
+4. Run: `npx vitest packages/core/src/domain/catalog.test.ts` — observe pass.
+5. Run: `harness validate`
+6. Commit: `feat(core): implement multi-source lookup in findByBarcode`
 
 ### Task 5: Final validation and project health check
 
 **Depends on:** Task 4 | **Files:** none
 
-1.  Run all tests in `packages/core`: `npx vitest packages/core`
-2.  Run `harness validate`.
-3.  Commit: `chore: finalize barcode enhancement domain integration`
+1. Run all tests in `packages/core`: `npx vitest packages/core`
+2. Run `harness validate`.
+3. Commit: `chore: finalize barcode enhancement domain integration`

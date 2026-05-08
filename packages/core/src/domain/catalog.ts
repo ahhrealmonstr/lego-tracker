@@ -150,10 +150,11 @@ export async function findByBarcode(barcode: string): Promise<LegoCatalogItem | 
   // 3. Check Rebrickable
   const external = await findRebrickableByBarcode(cleaned);
   if (external) {
-    // 4. Cache it in the background
-    await cacheCatalogItem(external);
+    // 4. Cache it in the background (fire and forget)
+    cacheCatalogItem(external).catch((err) => {
+      console.error('Failed to background cache item:', err);
+    });
     return external;
   }
-
   return undefined;
 }

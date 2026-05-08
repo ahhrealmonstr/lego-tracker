@@ -27,6 +27,7 @@ Implement `findRebrickableByBarcode` in the Rebrickable service to support exter
 **Depends on:** none | **Files:** `packages/core/package.json`
 
 1. Update `packages/core/package.json` to include `vitest`:
+
    ```json
    "scripts": {
      "test": "vitest run"
@@ -37,6 +38,7 @@ Implement `findRebrickableByBarcode` in the Rebrickable service to support exter
      "vitest": "^3.0.0"
    }
    ```
+
 2. Run: `npm install -w packages/core`
 3. Run: `harness validate`
 4. Commit: `chore(core): add vitest for service layer testing`
@@ -56,6 +58,7 @@ Implement `findRebrickableByBarcode` in the Rebrickable service to support exter
 **Depends on:** Task 2 | **Files:** `packages/core/src/services/rebrickable.test.ts`
 
 1. Add a test case for the new function:
+
    ```typescript
    it('should find an item by barcode', async () => {
      // @ts-ignore - function not yet implemented
@@ -63,6 +66,7 @@ Implement `findRebrickableByBarcode` in the Rebrickable service to support exter
      expect(item?.number).toBe('75312');
    });
    ```
+
 2. Run: `npx vitest packages/core/src/services/rebrickable.test.ts` — Observe failure (function undefined).
 3. Run: `harness validate`
 4. Commit: `test(rebrickable): add failing test for barcode lookup`
@@ -72,6 +76,7 @@ Implement `findRebrickableByBarcode` in the Rebrickable service to support exter
 **Depends on:** Task 3 | **Files:** `packages/core/src/services/rebrickable.ts`
 
 1. Implement the function in `packages/core/src/services/rebrickable.ts`:
+
    ```typescript
    export async function findRebrickableByBarcode(barcode: string): Promise<LegoCatalogItem | null> {
      const results = await fetchFromRebrickable('/sets/', { barcode: barcode.trim() });
@@ -81,6 +86,7 @@ Implement `findRebrickableByBarcode` in the Rebrickable service to support exter
      return null;
    }
    ```
+
 2. Run: `npx vitest packages/core/src/services/rebrickable.test.ts` — Observe pass.
 3. Run: `harness validate`
 4. Commit: `feat(rebrickable): implement findRebrickableByBarcode`
@@ -91,12 +97,14 @@ Implement `findRebrickableByBarcode` in the Rebrickable service to support exter
 
 1. Add a test case for 429 status code.
 2. Update `fetchFromRebrickable` in `packages/core/src/services/rebrickable.ts` to log rate limits:
+
    ```typescript
    if (response.status === 429) {
      console.warn('Rebrickable API rate limit exceeded');
      return [];
    }
    ```
+
 3. Run: `npx vitest packages/core/src/services/rebrickable.test.ts`
 4. Run: `harness validate`
 5. Commit: `feat(rebrickable): add rate limit handling to fetch helper`
