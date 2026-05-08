@@ -1,6 +1,6 @@
 import type { LegoCatalogItem, LegoItemType } from '../types/lego';
-import { searchRebrickable, findRebrickableItem } from '../services/rebrickable';
-import { getCachedItem, cacheCatalogItem } from '../services/supabase';
+import { searchRebrickable, findRebrickableItem, findRebrickableByBarcode } from '../services/rebrickable';
+import { getCachedItem, cacheCatalogItem, getCachedItemByBarcode } from '../services/supabase';
 
 export const seedCatalog: LegoCatalogItem[] = [
   {
@@ -137,6 +137,23 @@ export async function findCatalogItem(id: string): Promise<LegoCatalogItem | und
 }
 
 export async function findByBarcode(barcode: string): Promise<LegoCatalogItem | undefined> {
-  // For now, we only support barcode lookup for seeded items.
-  return seedCatalog.find((item) => item.barcode === barcode.trim());
+  const cleaned = barcode.trim();
+  
+  // 1. Check seed catalog
+  const local = seedCatalog.find((item) => item.barcode === cleaned);
+  if (local) return local;
+
+  // 2. Check cache
+  const cached = await getCachedItemByBarcode(cleaned);
+  if (cached) return cached;
+
+  // 3. Check Rebrickable
+  const external = await findRebrickableByBarcode(cleaned);
+  if (external) {
+    // 4. Cache it in the background
+    await cacheCatalogItem(external);
+    return external;
+  }
+
+  return undefined;
 }
