@@ -69,6 +69,7 @@ function App() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>(isSupabaseConfigured() ? 'idle' : 'error');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
+  const [isScanningBarcode, setIsScanningBarcode] = useState(false);
 
   useEffect(() => {
     saveCollection(items);
@@ -133,16 +134,27 @@ function App() {
   }
 
   async function handleBarcode(barcode: string) {
-    const match = await findByBarcode(barcode);
-    if (!match) {
-      setQuery(barcode);
-      setScanMessage(`No seeded match for ${barcode}. Search is filled so you can add it manually later.`);
-      return;
-    }
+    if (!barcode.trim() || isScanningBarcode) return;
 
-    setScannerOpen(false);
-    setScanMessage(`Found ${match.name}`);
-    addItem(match, 'collection');
+    setIsScanningBarcode(true);
+    setScanMessage(`Searching for ${barcode}...`);
+
+    try {
+      const match = await findByBarcode(barcode);
+      if (!match) {
+        setQuery(barcode);
+        setScanMessage(`Barcode ${barcode} not found in catalog or Rebrickable. Search is filled so you can add it manually.`);
+        return;
+      }
+
+      setScannerOpen(false);
+      setScanMessage(`Found ${match.name}`);
+      addItem(match, 'collection');
+    } catch (error) {
+      setScanMessage(`Error searching for barcode ${barcode}. Please try again.`);
+    } finally {
+      setIsScanningBarcode(false);
+    }
   }
 
   return (
@@ -248,7 +260,14 @@ function App() {
         onRemove={removeSelectedItem}
       />
 
-      {scannerOpen ? <BarcodeScanner onClose={() => setScannerOpen(false)} onDetected={handleBarcode} /> : null}
+      {scannerOpen ? (
+        <BarcodeScanner
+          isScanning={isScanningBarcode}
+          onClose={() => setScannerOpen(false)}
+          onDetected={handleBarcode}
+          statusMessage={scanMessage}
+        />
+      ) : null}
     </main>
   );
 }
@@ -454,10 +473,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function BarcodeScanner({ onClose, onDetected }: { onClose: () => void; onDetected: (barcode: string) => void }) {
+function BarcodeScanner({
+  onClose,
+  onDetected,
+  isScanning,
+  statusMessage,
+}: {
+  onClose: () => void;
+  onDetected: (barcode: string) => void;
+  isScanning: boolean;
+  statusMessage?: string;
+}) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [manualCode, setManualCode] = useState('');
-  const [message, setMessage] = useState(
+  const [browserMessage, setBrowserMessage] = useState(
     canUseBarcodeDetector() ? 'Point the camera at a barcode.' : 'Camera barcode detection is not supported in this browser.'
   );
 
@@ -467,7 +496,7 @@ function BarcodeScanner({ onClose, onDetected }: { onClose: () => void; onDetect
     let frameId = 0;
 
     async function start() {
-      if (!canUseBarcodeDetector()) {
+      if (!canUseBarcodeDetector() || isScanning) {
         return;
       }
 
@@ -481,7 +510,7 @@ function BarcodeScanner({ onClose, onDetected }: { onClose: () => void; onDetect
         await videoRef.current.play();
 
         const tick = async () => {
-          if (!active || !videoRef.current) {
+          if (!active || !videoRef.current || isScanning) {
             return;
           }
 
@@ -507,26 +536,31 @@ function BarcodeScanner({ onClose, onDetected }: { onClose: () => void; onDetect
       window.clearTimeout(frameId);
       stream?.getTracks().forEach((track) => track.stop());
     };
-  }, [onDetected]);
+  }, [onDetected, isScanning]);
 
   return (
     <div className="modal-backdrop">
       <section className="scanner-modal">
         <div className="modal-heading">
           <h2>Scan barcode</h2>
-          <button className="icon-button" type="button" title="Close" onClick={onClose}>
+          <button className="icon-button" type="button" title="Close" onClick={onClose} disabled={isScanning}>
             <X size={20} />
           </button>
         </div>
-        <div className="scanner-frame">
+        <div className={`scanner-frame ${isScanning ? 'processing' : ''}`}>
           <video ref={videoRef} muted playsInline />
-          <Camera size={34} />
+          {isScanning ? <RefreshCw size={34} className="spinning" /> : <Camera size={34} />}
         </div>
-        <p>{message}</p>
+        <p>{isScanning ? 'Looking up item details...' : statusMessage || browserMessage}</p>
         <div className="manual-barcode">
-          <input value={manualCode} onChange={(event) => setManualCode(event.target.value)} placeholder="Enter barcode" />
-          <button type="button" onClick={() => onDetected(manualCode)}>
-            Search
+          <input
+            value={manualCode}
+            onChange={(event) => setManualCode(event.target.value)}
+            placeholder="Enter barcode"
+            disabled={isScanning}
+          />
+          <button type="button" onClick={() => onDetected(manualCode)} disabled={isScanning}>
+            {isScanning ? 'Searching...' : 'Search'}
           </button>
         </div>
       </section>

@@ -429,6 +429,14 @@ h1 {
   z-index: 1;
 }
 
+.scanner-frame.processing video {
+  opacity: 0.4;
+}
+
+.scanner-frame.processing svg {
+  color: #f4c534;
+}
+
 .manual-barcode {
   margin-top: 14px;
 }
