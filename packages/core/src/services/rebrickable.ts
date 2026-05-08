@@ -76,10 +76,20 @@ export async function searchRebrickable(query: string): Promise<LegoCatalogItem[
 }
 
 export async function findRebrickableByBarcode(barcode: string): Promise<LegoCatalogItem | null> {
-  const results = await fetchFromRebrickable('/sets/', { barcode: barcode.trim() });
-  if (results && results.length > 0) {
-    return mapToCatalogItem(results[0], 'set');
+  const cleanedBarcode = barcode.trim();
+  
+  // Try sets first
+  const setResults = await fetchFromRebrickable('/sets/', { barcode: cleanedBarcode });
+  if (setResults && setResults.length > 0) {
+    return mapToCatalogItem(setResults[0], 'set');
   }
+
+  // Fallback to minifigs
+  const minifigResults = await fetchFromRebrickable('/minifigs/', { barcode: cleanedBarcode });
+  if (minifigResults && minifigResults.length > 0) {
+    return mapToCatalogItem(minifigResults[0], 'minifig');
+  }
+
   return null;
 }
 
@@ -92,6 +102,10 @@ export async function findRebrickableItem(number: string, type: LegoItemType): P
 
   try {
     const response = await fetch(url);
+    if (response.status === 429) {
+      console.warn('Rebrickable API rate limit exceeded');
+      return null;
+    }
     if (!response.ok) return null;
     const item: RebrickableItem = await response.json();
     return mapToCatalogItem(item, type);

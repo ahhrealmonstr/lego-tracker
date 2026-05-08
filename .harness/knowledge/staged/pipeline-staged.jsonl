@@ -1,2 +1,3 @@
-{"id":"bk:services:barcode-scanning","source":"extractor","nodeType":"business_concept","name":"Barcode Scanning Service","confidence":0.7,"contentHash":"bk:services:barcode-scanning","timestamp":"2026-05-08T09:45:01.491Z"}
-{"id":"bk:services:localstorage-persistence","source":"extractor","nodeType":"business_concept","name":"LocalStorage Persistence","confidence":0.7,"contentHash":"bk:services:localstorage-persistence","timestamp":"2026-05-08T09:45:01.491Z"}
+{"id":"bk:services:barcode-scanning","source":"extractor","nodeType":"business_concept","name":"Barcode Scanning Service","confidence":0.7,"contentHash":"bk:services:barcode-scanning","timestamp":"2026-05-08T09:50:11.018Z"}
+{"id":"bk:services:localstorage-persistence","source":"extractor","nodeType":"business_concept","name":"LocalStorage Persistence","confidence":0.7,"contentHash":"bk:services:localstorage-persistence","timestamp":"2026-05-08T09:50:11.018Z"}
+{"id":"bk:services:rebrickable-api","source":"extractor","nodeType":"business_concept","name":"Rebrickable API Service","confidence":0.7,"contentHash":"bk:services:rebrickable-api","timestamp":"2026-05-08T09:50:11.018Z"}
