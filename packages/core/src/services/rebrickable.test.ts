@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { searchRebrickable } from './rebrickable';
+import { searchRebrickable, findRebrickableByBarcode } from './rebrickable';
 import { getConfig } from '../config';
 
 // Mock config
@@ -15,6 +15,24 @@ describe('Rebrickable Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getConfig as any).mockReturnValue({ rebrickableApiKey: 'test-api-key' });
+  });
+
+  describe('findRebrickableByBarcode', () => {
+    it('should find an item by barcode', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [
+            { set_num: '75312-1', name: 'Boba Fett\'s Starship', year: 2021, theme_id: 158, num_parts: 593, set_img_url: 'http://example.com/75312.jpg' }
+          ]
+        })
+      });
+
+      // @ts-ignore - function not yet implemented
+      const item = await findRebrickableByBarcode('5702016913484');
+      expect(item?.number).toBe('75312-1');
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('barcode=5702016913484'));
+    });
   });
 
   describe('searchRebrickable', () => {
