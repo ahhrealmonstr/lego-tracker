@@ -34,7 +34,7 @@ describe('Rebrickable Service', () => {
     });
 
     it('should return null if API returns no results', async () => {
-      mockFetch.mockResolvedValueOnce({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => ({ results: [] })
       });
@@ -44,7 +44,7 @@ describe('Rebrickable Service', () => {
 
     it('should return null and log warning on 429 rate limit', async () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      mockFetch.mockResolvedValueOnce({
+      mockFetch.mockResolvedValue({
         status: 429,
         ok: false
       });
