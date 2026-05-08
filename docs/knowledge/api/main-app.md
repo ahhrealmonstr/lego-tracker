@@ -7,7 +7,7 @@ related: [main.tsx, api]
 
 # Main Application Components
 
-The `src/api/main.tsx` file contains the React entry point and all UI components for Brick Ledger.
+The `apps/web/src/api/main.tsx` file contains the React entry point and all UI components for Brick Ledger.
 
 ## App
 

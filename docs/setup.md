@@ -59,9 +59,20 @@ Use this as a quick project health check after documentation, code, or architect
 
 ## Environment Variables
 
-No environment variables are required for the current local-first web app.
+The app integrates with the Rebrickable API for expanded catalog search. To enable this, you need a Rebrickable API key.
 
-Supabase packages are installed for future backend work, but the current app does not connect to Supabase or any remote API.
+1. Create a `.env.local` file in the project root.
+2. Add your API key:
+
+```text
+VITE_REBRICKABLE_API_KEY=your_key_here
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+You can obtain a Rebrickable API key by creating an account on [Rebrickable](https://rebrickable.com/api/). Supabase keys are found in your Supabase project dashboard under Project Settings -> API.
+
+If the key is missing, the app will continue to function using only the locally seeded catalog.
 
 ## Browser Storage
 

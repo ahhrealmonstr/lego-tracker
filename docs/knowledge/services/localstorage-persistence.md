@@ -7,7 +7,7 @@ related: [storage.ts, services]
 
 # LocalStorage Persistence
 
-The storage module in `src/services/storage.ts` handles browser localStorage persistence for the LEGO collection.
+The storage module in `apps/web/src/services/storage.ts` handles browser localStorage persistence for the LEGO collection.
 
 ## storageKey
 

@@ -12,33 +12,37 @@
   "layers": [
     {
       "name": "types",
-      "pattern": "src/types/**",
+      "pattern": "packages/core/src/types/**",
       "allowedDependencies": []
     },
     {
-      "name": "domain",
-      "pattern": "src/domain/**",
+      "name": "services",
+      "pattern": "{packages/core/src/services/**,apps/web/src/services/**}",
       "allowedDependencies": [
         "types"
       ]
     },
     {
-      "name": "services",
-      "pattern": "src/services/**",
+      "name": "domain",
+      "pattern": "packages/core/src/domain/**",
       "allowedDependencies": [
         "types",
-        "domain"
+        "services"
       ]
     },
     {
       "name": "api",
-      "pattern": "src/api/**",
+      "pattern": "apps/web/src/api/**",
       "allowedDependencies": [
         "types",
         "domain",
         "services"
       ]
     }
+  ],
+  "entryPoints": [
+    "apps/web/src/api/main.tsx",
+    "packages/core/src/index.ts"
   ],
   "agentsMapPath": "./AGENTS.md",
   "docsDir": "./docs",

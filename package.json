@@ -1,22 +1,19 @@
 {
+  "name": "lego-tracker-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "tsc && vite build",
-    "preview": "vite preview --host 0.0.0.0"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.105.1",
-    "lucide-react": "^0.468.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "web:dev": "npm run dev -w apps/web",
+    "web:build": "npm run build -w apps/web",
+    "lint:md": "markdownlint \"*.md\" \"docs/**/*.md\"",
+    "supabase:init": "supabase init"
   },
   "devDependencies": {
     "@postgres-language-server/cli": "^0.24.0",
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^4.7.0",
-    "supabase": "^2.95.6",
-    "typescript": "^5.9.3",
-    "vite": "^6.4.2"
+    "markdownlint-cli": "^0.48.0",
+    "supabase": "^2.95.6"
   }
 }

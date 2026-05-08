@@ -5,22 +5,52 @@ import {
   Box,
   Camera,
   Check,
+  Cloud,
+  CloudOff,
+  Download,
   Heart,
   LayoutGrid,
   Library,
   MapPin,
   PackageCheck,
   Plus,
+  RefreshCw,
   Search,
   X,
 } from 'lucide-react';
-import { findByBarcode, searchCatalog, seedCatalog } from '../domain/catalog';
-import { createOwnedItem, summarizeCollection, upsertOwnedItem } from '../domain/collection';
-import { buildStatusLabels, itemTypeLabels, qualityLabels, statusLabels } from '../domain/options';
+import {
+  AcquisitionQuality,
+  BuildStatus,
+  CollectionStatus,
+  LegoCatalogItem,
+  OwnedLegoItem,
+  buildStatusLabels,
+  collectionToCSV,
+  collectionToJSON,
+  createOwnedItem,
+  downloadBlob,
+  findByBarcode,
+  isSupabaseConfigured,
+  itemTypeLabels,
+  qualityLabels,
+  searchCatalog,
+  seedCatalog,
+  setConfig,
+  statusLabels,
+  summarizeCollection,
+  syncCollectionToCloud,
+  upsertOwnedItem,
+} from '@lego-tracker/core';
 import { canUseBarcodeDetector, scanVideoFrame } from '../services/barcode';
 import { loadCollection, saveCollection } from '../services/storage';
-import type { AcquisitionQuality, BuildStatus, CollectionStatus, LegoCatalogItem, OwnedLegoItem } from '../types/lego';
 import './styles.css';
+
+// Initialize core config
+setConfig({
+  rebrickableApiKey: import.meta.env.VITE_REBRICKABLE_API_KEY,
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+});
 
 type ViewMode = 'collection' | 'wishlist' | 'catalog';
 
@@ -33,6 +63,10 @@ function App() {
   const [items, setItems] = useState<OwnedLegoItem[]>(() => loadCollection());
   const [activeView, setActiveView] = useState<ViewMode>('catalog');
   const [selectedItemId, setSelectedItemId] = useState<string>(seedCatalog[0]?.id ?? '');
+  const [catalogResults, setCatalogResults] = useState<LegoCatalogItem[]>(seedCatalog);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>(isSupabaseConfigured() ? 'idle' : 'error');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
 
@@ -40,12 +74,39 @@ function App() {
     saveCollection(items);
   }, [items]);
 
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchCatalog(query);
+        setCatalogResults(results);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [query]);
+
   const summary = useMemo(() => summarizeCollection(items), [items]);
   const selectedOwnedItem = items.find((item) => item.id === selectedItemId);
-  const selectedCatalogItem = seedCatalog.find((item) => item.id === selectedItemId);
-  const selectedItem = selectedOwnedItem ?? selectedCatalogItem ?? seedCatalog[0];
-  const filteredCatalog = useMemo(() => searchCatalog(query), [query]);
+  const selectedCatalogItem = catalogResults.find((item) => item.id === selectedItemId);
+  const selectedItem = selectedOwnedItem ?? selectedCatalogItem;
   const visibleOwnedItems = items.filter((item) => item.status === activeView);
+
+  async function handleSync() {
+    if (!isSupabaseConfigured()) return;
+    setIsSyncing(true);
+    try {
+      await syncCollectionToCloud(items);
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } catch {
+      setSyncStatus('error');
+    } finally {
+      setIsSyncing(false);
+    }
+  }
 
   function addItem(item: LegoCatalogItem, status: CollectionStatus) {
     const ownedItem = createOwnedItem(item, status);
@@ -71,8 +132,8 @@ function App() {
     setActiveView('catalog');
   }
 
-  function handleBarcode(barcode: string) {
-    const match = findByBarcode(barcode);
+  async function handleBarcode(barcode: string) {
+    const match = await findByBarcode(barcode);
     if (!match) {
       setQuery(barcode);
       setScanMessage(`No seeded match for ${barcode}. Search is filled so you can add it manually later.`);
@@ -104,9 +165,46 @@ function App() {
           <Stat label="Built" value={summary.completeBuilds.toString()} icon={<Check size={18} />} />
         </div>
 
+        <div className="export-actions">
+          <button
+            className="text-button"
+            type="button"
+            onClick={() => downloadBlob(collectionToJSON(items), 'lego-collection.json', 'application/json')}
+          >
+            <Download size={14} /> Export JSON
+          </button>
+          <button
+            className="text-button"
+            type="button"
+            onClick={() => downloadBlob(collectionToCSV(items), 'lego-collection.csv', 'text/csv')}
+          >
+            <Download size={14} /> Export CSV
+          </button>
+
+          {isSupabaseConfigured() && (
+            <button
+              className="text-button cloud-sync"
+              type="button"
+              disabled={isSyncing}
+              onClick={handleSync}
+            >
+              {isSyncing ? (
+                <RefreshCw size={14} className="spinning" />
+              ) : syncStatus === 'success' ? (
+                <Check size={14} />
+              ) : syncStatus === 'error' ? (
+                <CloudOff size={14} />
+              ) : (
+                <Cloud size={14} />
+              )}
+              {isSyncing ? 'Syncing...' : syncStatus === 'success' ? 'Synced' : syncStatus === 'error' ? 'Sync Failed' : 'Sync to Cloud'}
+            </button>
+          )}
+        </div>
+
         <div className="toolbar">
           <label className="search-box">
-            <Search size={18} />
+            <Search size={18} className={isSearching ? 'spinning' : ''} />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -134,7 +232,7 @@ function App() {
 
         <ItemList
           activeView={activeView}
-          catalogItems={filteredCatalog}
+          catalogItems={catalogResults}
           ownedItems={visibleOwnedItems}
           selectedItemId={selectedItem?.id}
           onSelect={setSelectedItemId}

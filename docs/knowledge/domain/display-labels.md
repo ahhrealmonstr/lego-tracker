@@ -7,11 +7,11 @@ related: [options.ts, domain]
 
 # Display Labels and Options
 
-The options module in `src/domain/options.ts` maps enum types to human-readable labels for UI display.
+The options module in `packages/core/src/domain/options.ts` maps enum types to human-readable labels for UI display.
 
 ## itemTypeLabels
 
-`itemTypeLabels` maps `LegoItemType` to display strings: `'set'` → `'Set'`, `'minifig'` → `'Minifig'`. Used in `ItemList` and `DetailPanel` in `src/api/main.tsx`.
+`itemTypeLabels` maps `LegoItemType` to display strings: `'set'` → `'Set'`, `'minifig'` → `'Minifig'`. Used in `ItemList` and `DetailPanel` in `apps/web/src/api/main.tsx`.
 
 ## statusLabels
 

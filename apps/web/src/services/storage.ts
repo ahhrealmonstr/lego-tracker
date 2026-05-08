@@ -1,4 +1,4 @@
-import type { OwnedLegoItem } from '../types/lego';
+import type { OwnedLegoItem } from '@lego-tracker/core';
 
 const storageKey = 'brick-ledger.collection.v1';
 

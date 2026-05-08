@@ -106,7 +106,27 @@ h1 {
   display: grid;
   gap: 10px;
   grid-template-columns: 1fr 1fr;
-  margin: 22px 0;
+  margin: 22px 0 12px;
+}
+
+.export-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.text-button {
+  background: transparent;
+  color: #c92f2f;
+  font-size: 13px;
+  font-weight: 600;
+  min-height: auto;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.text-button:hover {
+  color: #22282e;
 }
 
 .stat {
@@ -159,6 +179,16 @@ h1 {
   color: #1d2329;
   outline: 0;
   width: 100%;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+  color: #c92f2f;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .field input,
