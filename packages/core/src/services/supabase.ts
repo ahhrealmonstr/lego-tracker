@@ -39,6 +39,33 @@ export async function getCachedItem(id: string): Promise<LegoCatalogItem | null>
   };
 }
 
+export async function getCachedItemByBarcode(barcode: string): Promise<LegoCatalogItem | null> {
+  const supabase = getClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('catalog_cache')
+    .select('*')
+    .eq('barcode', barcode)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    type: data.type as any,
+    number: data.number,
+    name: data.name,
+    theme: data.theme,
+    year: data.year,
+    pieceCount: data.piece_count,
+    retired: false,
+    estimatedValue: 0,
+    imageUrl: data.image_url,
+    barcode: data.barcode,
+  };
+}
+
 export async function cacheCatalogItem(item: LegoCatalogItem) {
   const supabase = getClient();
   if (!supabase) return;
