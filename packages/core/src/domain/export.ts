@@ -30,8 +30,8 @@ export function collectionToCSV(items: OwnedLegoItem[]): string {
       .map((header) => {
         const value = item[header as keyof OwnedLegoItem];
         const stringValue = value === undefined || value === null ? '' : String(value);
-        // Escape quotes and wrap in quotes if contains comma
-        if (stringValue.includes(',') || stringValue.includes('"')) {
+        // Escape quotes and wrap in quotes if contains comma, quote, or newline
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
           return `"${stringValue.replace(/"/g, '""')}"`;
         }
         return stringValue;
@@ -40,16 +40,4 @@ export function collectionToCSV(items: OwnedLegoItem[]): string {
   });
 
   return [headers.join(','), ...rows].join('\n');
-}
-
-export function downloadBlob(content: string, filename: string, contentType: string) {
-  const blob = new Blob([content], { type: contentType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }

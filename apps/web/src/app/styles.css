@@ -36,14 +36,31 @@ button {
   justify-content: center;
   min-height: 42px;
   padding: 0 14px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+button:focus-visible {
+  outline: 2px solid #22282e;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(34, 40, 46, 0.2);
 }
 
 button.secondary {
   background: #22282e;
 }
 
+button.secondary:focus-visible {
+  outline-color: #c92f2f;
+  box-shadow: 0 0 0 4px rgba(201, 47, 47, 0.2);
+}
+
 button.danger {
   background: #7c2d2d;
+}
+
+button.danger:focus-visible {
+  outline-color: #c92f2f;
+  box-shadow: 0 0 0 4px rgba(201, 47, 47, 0.2);
 }
 
 .app-shell {
@@ -169,6 +186,11 @@ h1 {
   padding: 0 12px;
 }
 
+.search-box:focus-within {
+  border-color: #c92f2f;
+  box-shadow: 0 0 0 2px rgba(201, 47, 47, 0.1);
+}
+
 .search-box input,
 .field input,
 .field select,
@@ -179,6 +201,14 @@ h1 {
   color: #1d2329;
   outline: 0;
   width: 100%;
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible,
+.manual-barcode input:focus-visible {
+  outline: 2px solid #c92f2f;
+  outline-offset: -1px;
 }
 
 .spinning {
@@ -260,9 +290,22 @@ h1 {
   grid-template-columns: 64px minmax(0, 1fr) auto;
   min-height: 84px;
   padding: 9px;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  outline: 0;
+}
+
+.item-row:hover {
+  background: #f7f7f3;
+  border-color: #d8ddd4;
+}
+
+.item-row:focus-visible {
+  border-color: #c92f2f;
+  box-shadow: 0 0 0 2px rgba(201, 47, 47, 0.2);
 }
 
 .item-row.selected {
+  background: #fff;
   border-color: #c92f2f;
   box-shadow: 0 0 0 2px rgba(201, 47, 47, 0.1);
 }

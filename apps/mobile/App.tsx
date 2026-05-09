@@ -1,24 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { searchCatalog, LegoCatalogItem, setConfig } from '@lego-tracker/core';
-
-// Initialize core config (placeholders for now)
-setConfig({
-  rebrickableApiKey: '', 
-  supabaseUrl: '',
-  supabaseAnonKey: '',
-});
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [results, setResults] = useState<LegoCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [configLoaded, setConfigLoaded] = useState(false);
+  const isMountedRef = useRef(true);
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
+  useEffect(() => {
+    async function loadConfig() {
+      // Simulate loading from SecureStore or Constants
+      // In a real app, this would be: await SecureStore.getItemAsync('REBRICKABLE_API_KEY')
+      setConfig({
+        rebrickableApiKey: '', // Load from secure source
+        supabaseUrl: '',
+        supabaseAnonKey: '',
+      });
+      if (isMountedRef.current) {
+        setConfigLoaded(true);
+      }
+    }
+
+    loadConfig();
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const handleBarCodeScanned = useCallback(async ({ data }: { type: string, data: string }) => {
+    if (!configLoaded) return;
+
+    setScanned(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const items = await searchCatalog(data);
+      if (isMountedRef.current) {
+        setResults(items);
+      }
+    } catch (err) {
+      if (isMountedRef.current) {
+        setError('Failed to lookup barcode. Please try again.');
+        console.error(err);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [configLoaded]);
+
+  if (!permission || !configLoaded) {
+    // Camera permissions or config are still loading.
+    return <View style={styles.container}><Text style={styles.statusText}>Initializing...</Text></View>;
   }
 
   if (!permission.granted) {
@@ -31,18 +71,11 @@ export default function App() {
     );
   }
 
-  const handleBarCodeScanned = async ({ type, data }: { type: string, data: string }) => {
-    setScanned(true);
-    setLoading(true);
-    try {
-      // For now, we search by the barcode string
-      const items = await searchCatalog(data);
-      setResults(items);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+  const resetScan = () => {
+    setScanned(false);
+    setResults([]);
+    setError(null);
+    setLoading(false);
   };
 
   return (
@@ -57,17 +90,15 @@ export default function App() {
 
       <View style={styles.overlay}>
         {loading && <Text style={styles.statusText}>Searching...</Text>}
-        {scanned && (
+        {error && <Text style={[styles.statusText, { backgroundColor: 'rgba(201, 47, 47, 0.8)' }]}>{error}</Text>}
+        {scanned && !loading && (
           <View style={styles.resultBox}>
             <Text style={styles.resultTitle}>
               {results.length > 0 ? `Found: ${results[0].name}` : 'No item found'}
             </Text>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => {
-                setScanned(false);
-                setResults([]);
-              }}
+              onPress={resetScan}
             >
               <Text style={styles.buttonText}>Scan Again</Text>
             </TouchableOpacity>

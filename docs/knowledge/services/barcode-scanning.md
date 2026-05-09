@@ -11,7 +11,7 @@ The barcode module in `apps/web/src/services/barcode.ts` wraps the browser Barco
 
 ## canUseBarcodeDetector
 
-`canUseBarcodeDetector` returns `true` if `window.BarcodeDetector` is available. Used in `BarcodeScanner` component in `apps/web/src/api/main.tsx` to determine whether to show camera scanning or manual input.
+`canUseBarcodeDetector` returns `true` if `window.BarcodeDetector` is available. Used in `BarcodeScanner` component in `apps/web/src/app/App.tsx` to determine whether to show camera scanning or manual input.
 
 ## scanVideoFrame
 

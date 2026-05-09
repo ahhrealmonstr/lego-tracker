@@ -1,4 +1,4 @@
-import type { CollectionStatus, CollectionSummary, LegoCatalogItem, OwnedLegoItem } from '../types/lego';
+import type { AcquisitionQuality, CollectionStatus, CollectionSummary, LegoCatalogItem, OwnedLegoItem } from '../types/lego';
 
 export function createOwnedItem(item: LegoCatalogItem, status: CollectionStatus): OwnedLegoItem {
   const now = new Date().toISOString();
@@ -6,7 +6,7 @@ export function createOwnedItem(item: LegoCatalogItem, status: CollectionStatus)
   return {
     ...item,
     status,
-    acquiredQuality: status === 'collection' ? 'new' : 'used-with-box-instructions',
+    ...(status === 'collection' ? { acquiredQuality: 'new' as AcquisitionQuality } : {}),
     savedBox: true,
     buildStatus: status === 'collection' ? 'not-started' : 'not-started',
     displayLocation: '',

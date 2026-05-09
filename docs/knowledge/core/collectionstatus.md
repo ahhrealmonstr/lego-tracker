@@ -5,4 +5,6 @@ domain: core
 
 # CollectionStatus
 
+```typescript
 type CollectionStatus = 'collection' | 'wishlist'
+```

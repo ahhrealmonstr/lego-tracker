@@ -26,7 +26,7 @@ Currently, Brick Ledger only supports barcode lookup for a small set of hardcode
 
 ### Phase 3: UI Feedback & Verification
 <!-- complexity: low -->
-- [ ] Ensure the web UI handled the async nature of barcode lookup (show loading state if necessary).
+- [ ] Ensure the web UI handles the async nature of barcode lookup (show loading state if necessary).
 - [ ] Verify with real LEGO barcodes (manual verification).
 
 ## Success Criteria

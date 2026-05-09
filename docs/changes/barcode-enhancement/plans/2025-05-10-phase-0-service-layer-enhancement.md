@@ -4,7 +4,7 @@
 
 ## Goal
 
-Implement `findRebrickableByBarcode` in the Rebrickable service to support external barcode lookups, as defined in Phase 1 of the enhancement spec.
+Implement `findRebrickableByBarcode` in the Rebrickable service to support external barcode lookups, as defined in Phase 0 of the enhancement spec.
 
 ## Observable Truths (Acceptance Criteria)
 

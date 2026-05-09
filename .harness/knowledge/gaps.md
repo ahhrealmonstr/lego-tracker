@@ -1,13 +1,13 @@
 # Knowledge Gaps Report
 
-Generated: 2026-05-08T10:37:37.115Z
+Generated: 2026-05-09T03:56:07.850Z
 
 ## Coverage by Domain
 
 | Domain | Documented | Extracted | Gaps |
 | ------ | ---------- | --------- | ---- |
-| api | 1 | 1 | 0 |
-| core | 15 | 16 | 1 |
+| app | 1 | 1 | 0 |
+| core | 18 | 19 | 1 |
 | domain | 3 | 3 | 0 |
 | services | 3 | 3 | 0 |
 | types | 3 | 3 | 0 |
@@ -16,6 +16,6 @@ Generated: 2026-05-08T10:37:37.115Z
 
 ## Summary
 
-- **Total Documented:** 27
-- **Total Extracted:** 28
+- **Total Documented:** 30
+- **Total Extracted:** 31
 - **Total Gaps:** 1

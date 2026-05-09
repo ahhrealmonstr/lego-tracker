@@ -5,7 +5,7 @@ import { findRebrickableByBarcode } from '../services/rebrickable';
 
 vi.mock('../services/supabase', () => ({
   getCachedItemByBarcode: vi.fn(),
-  cacheCatalogItem: vi.fn(),
+  cacheCatalogItem: vi.fn().mockResolvedValue(undefined),
   getCachedItem: vi.fn(),
 }));
 

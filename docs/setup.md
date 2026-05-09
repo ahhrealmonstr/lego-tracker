@@ -62,17 +62,20 @@ Use this as a quick project health check after documentation, code, or architect
 The app integrates with the Rebrickable API for expanded catalog search. To enable this, you need a Rebrickable API key.
 
 1. Create a `.env.local` file in the project root.
-2. Add your API key:
+2. Add your API keys:
 
 ```text
+# Required for expanded catalog search
 VITE_REBRICKABLE_API_KEY=your_key_here
+
+# Optional: for cloud storage features
 VITE_SUPABASE_URL=your_project_url
 VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 You can obtain a Rebrickable API key by creating an account on [Rebrickable](https://rebrickable.com/api/). Supabase keys are found in your Supabase project dashboard under Project Settings -> API.
 
-If the key is missing, the app will continue to function using only the locally seeded catalog.
+If the Rebrickable API key is missing, the app will continue to function using only the locally seeded catalog. Fallback to the local catalog applies only when this key is absent; other missing keys may disable their respective features.
 
 ## Browser Storage
 

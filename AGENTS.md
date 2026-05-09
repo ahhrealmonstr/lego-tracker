@@ -6,8 +6,8 @@
 
 ## Repository Structure
 
-- `apps/web/src/api/`: React UI components and application entry point (`main.tsx`).
-- `apps/web/src/services/`: Browser-specific boundaries (e.g., `localStorage`, Barcode Detection API).
+- `apps/web/src/api/`: React components, global styles, and the web entry point (`main.tsx`).
+- `apps/web/src/services/`: Web-only side effects (storage, barcode camera access).
 - `packages/core/src/domain/`: Pure business logic, catalog search, and collection management.
 - `packages/core/src/services/`: External API integrations (Rebrickable, Supabase).
 - `packages/core/src/types/`: Shared TypeScript contracts and interfaces.

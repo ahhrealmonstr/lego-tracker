@@ -42,17 +42,14 @@ describe('Rebrickable Service', () => {
       expect(item).toBeNull();
     });
 
-    it('should return null and log warning on 429 rate limit', async () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      mockFetch.mockResolvedValue({
+    it('should throw RateLimitError on 429 rate limit', async () => {
+      mockFetch.mockResolvedValueOnce({
         status: 429,
-        ok: false
+        ok: false,
+        headers: new Map([['Retry-After', '30']])
       });
 
-      const item = await findRebrickableByBarcode('5702016913484');
-      expect(item).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('rate limit exceeded'));
-      consoleSpy.mockRestore();
+      await expect(findRebrickableByBarcode('5702016913484')).rejects.toThrow('rate limit exceeded');
     });
   });
 
@@ -85,6 +82,26 @@ describe('Rebrickable Service', () => {
       const items = await searchRebrickable('star wars');
       expect(items).toEqual([]);
       expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array on network failure', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
+      const items = await searchRebrickable('star wars');
+      expect(items).toEqual([]);
+    });
+
+    it('should return empty array on non-ok status', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 500 });
+      const items = await searchRebrickable('star wars');
+      expect(items).toEqual([]);
+    });
+
+    it('should throw RateLimitError on 429', async () => {
+      mockFetch.mockResolvedValue({
+        status: 429,
+        headers: new Map([['Retry-After', '30']])
+      });
+      await expect(searchRebrickable('star wars')).rejects.toThrow('rate limit exceeded');
     });
   });
 });

@@ -28,7 +28,7 @@ export interface LegoCatalogItem {
 
 export interface OwnedLegoItem extends LegoCatalogItem {
   status: CollectionStatus;
-  acquiredQuality: AcquisitionQuality;
+  acquiredQuality?: AcquisitionQuality;
   savedBox: boolean;
   buildStatus: BuildStatus;
   displayLocation: string;

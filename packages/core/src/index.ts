@@ -6,3 +6,4 @@ export * from './domain/options';
 export * from './domain/export';
 export * from './services/rebrickable';
 export * from './services/supabase';
+export * from './infrastructure/download';

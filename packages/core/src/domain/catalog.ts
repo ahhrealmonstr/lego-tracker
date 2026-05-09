@@ -124,12 +124,14 @@ export async function findCatalogItem(id: string): Promise<LegoCatalogItem | und
   // If not in seed or cache, try to fetch from Rebrickable
   const parts = id.split('-');
   if (parts.length === 2) {
-    const type = parts[0] as LegoItemType;
-    const number = parts[1];
-    const item = await findRebrickableItem(number, type);
-    if (item) {
-      await cacheCatalogItem(item);
-      return item;
+    const type = parts[0];
+    if (type === 'set' || type === 'minifig') {
+      const number = parts[1];
+      const item = await findRebrickableItem(number, type as LegoItemType);
+      if (item) {
+        await cacheCatalogItem(item);
+        return item;
+      }
     }
   }
 
