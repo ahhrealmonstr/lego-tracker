@@ -1,19 +1,21 @@
 # Knowledge Gaps Report
 
-Generated: 2026-05-05T15:21:26.589Z
+Generated: 2026-05-09T03:56:07.850Z
 
 ## Coverage by Domain
 
 | Domain | Documented | Extracted | Gaps |
 | ------ | ---------- | --------- | ---- |
-| api | 1 | 2 | 1 |
+| app | 1 | 1 | 0 |
+| core | 18 | 19 | 1 |
 | domain | 3 | 3 | 0 |
-| services | 2 | 2 | 0 |
-| types | 3 | 5 | 2 |
+| services | 3 | 3 | 0 |
+| types | 3 | 3 | 0 |
 | vite.config.ts | 1 | 1 | 0 |
+| web | 1 | 1 | 0 |
 
 ## Summary
 
-- **Total Documented:** 10
-- **Total Extracted:** 13
-- **Total Gaps:** 3
+- **Total Documented:** 30
+- **Total Extracted:** 31
+- **Total Gaps:** 1

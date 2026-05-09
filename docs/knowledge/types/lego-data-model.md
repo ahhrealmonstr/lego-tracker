@@ -7,7 +7,7 @@ related: [lego.ts, domain/catalog.ts]
 
 # Lego Data Model
 
-The Brick Ledger data model is defined in `src/types/lego.ts` and shared across all layers.
+The Brick Ledger data model is defined in `packages/core/src/types/lego.ts` and shared across all layers.
 
 ## Core Types
 
@@ -31,7 +31,7 @@ The `LegoItemType` type distinguishes between `'set'` and `'minifig'` catalog en
 - `imageUrl`: URL to the item's image
 - `barcode`: Optional barcode string for scanning
 
-The catalog is seeded in `seedCatalog` in `src/domain/catalog.ts` and searched via `searchCatalog` and `findByBarcode`.
+The catalog is seeded in `seedCatalog` in `packages/core/src/domain/catalog.ts` and searched via `searchCatalog` and `findByBarcode`.
 
 ### OwnedLegoItem
 
@@ -48,7 +48,7 @@ The catalog is seeded in `seedCatalog` in `src/domain/catalog.ts` and searched v
 - `addedAt`: ISO timestamp when first added
 - `updatedAt`: ISO timestamp of last modification
 
-Created by `createOwnedItem` in `src/domain/collection.ts` and persisted by `saveCollection` in `src/services/storage.ts`.
+Created by `createOwnedItem` in `packages/core/src/domain/collection.ts` and persisted by `saveCollection` in `apps/web/src/services/storage.ts`.
 
 ### CollectionSummary
 
@@ -59,13 +59,13 @@ Created by `createOwnedItem` in `src/domain/collection.ts` and persisted by `sav
 - `totalEstimatedValue`: Sum of `estimatedValue * quantity` for collection items
 - `completeBuilds`: Count of items with `buildStatus === 'complete'`
 
-Computed by `summarizeCollection` in `src/domain/collection.ts`.
+Computed by `summarizeCollection` in `packages/core/src/domain/collection.ts`.
 
 ## Status and Quality Enums
 
 ### CollectionStatus
 
-`CollectionStatus` is `'collection'` or `'wishlist'`. Labels provided by `statusLabels` in `src/domain/options.ts`.
+`CollectionStatus` is `'collection'` or `'wishlist'`. Labels provided by `statusLabels` in `packages/core/src/domain/options.ts`.
 
 ### AcquisitionQuality
 
@@ -77,4 +77,4 @@ Computed by `summarizeCollection` in `src/domain/collection.ts`.
 
 ## Validation
 
-The `isOwnedLegoItem` function in `src/services/storage.ts` validates loaded data against all these types before returning from `loadCollection`. It checks every field using `isOneOf` for enum types.
+The `isOwnedLegoItem` function in `apps/web/src/services/storage.ts` validates loaded data against all these types before returning from `loadCollection`. It checks every field using `isOneOf` for enum types.

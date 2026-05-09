@@ -7,11 +7,11 @@ related: [barcode.ts, services]
 
 # Barcode Scanning Service
 
-The barcode module in `src/services/barcode.ts` wraps the browser BarcodeDetector API for camera-based barcode scanning.
+The barcode module in `apps/web/src/services/barcode.ts` wraps the browser BarcodeDetector API for camera-based barcode scanning.
 
 ## canUseBarcodeDetector
 
-`canUseBarcodeDetector` returns `true` if `window.BarcodeDetector` is available. Used in `BarcodeScanner` component in `src/api/main.tsx` to determine whether to show camera scanning or manual input.
+`canUseBarcodeDetector` returns `true` if `window.BarcodeDetector` is available. Used in `BarcodeScanner` component in `apps/web/src/app/App.tsx` to determine whether to show camera scanning or manual input.
 
 ## scanVideoFrame
 

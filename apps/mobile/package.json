@@ -1,0 +1,26 @@
+{
+  "name": "mobile",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@lego-tracker/core": "^0.1.0",
+    "expo": "~54.0.33",
+    "expo-barcode-scanner": "^13.0.1",
+    "expo-camera": "~17.0.10",
+    "expo-status-bar": "~3.0.9",
+    "lucide-react-native": "^1.14.0",
+    "react": "^18.3.1",
+    "react-native": "0.76.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}

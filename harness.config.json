@@ -9,36 +9,49 @@
       "**/output/**"
     ]
   },
+  "arch": {
+    "excludePatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.harness/**",
+      "**/output/**"
+    ]
+  },
   "layers": [
     {
       "name": "types",
-      "pattern": "src/types/**",
+      "pattern": "packages/core/src/types/*.ts",
       "allowedDependencies": []
     },
     {
-      "name": "domain",
-      "pattern": "src/domain/**",
+      "name": "services",
+      "pattern": "{packages/core/src/services/*.ts,apps/web/src/services/*.ts}",
       "allowedDependencies": [
         "types"
       ]
     },
     {
-      "name": "services",
-      "pattern": "src/services/**",
+      "name": "domain",
+      "pattern": "packages/core/src/domain/*.ts",
       "allowedDependencies": [
         "types",
-        "domain"
-      ]
+        "services"
+      ],
+      "description": "Domain depends on services for external catalog orchestration and caching."
     },
     {
-      "name": "api",
-      "pattern": "src/api/**",
+      "name": "app",
+      "pattern": "apps/web/src/app/*.{ts,tsx}",
       "allowedDependencies": [
         "types",
         "domain",
         "services"
       ]
     }
+  ],
+  "entryPoints": [
+    "./apps/web/src/app/index.tsx",
+    "./packages/core/src/index.ts"
   ],
   "agentsMapPath": "./AGENTS.md",
   "docsDir": "./docs",

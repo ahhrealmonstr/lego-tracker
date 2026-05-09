@@ -7,7 +7,7 @@ related: [catalog.ts, domain]
 
 # Catalog Search and Lookup
 
-The catalog module in `src/domain/catalog.ts` provides search and lookup for the seeded LEGO catalog.
+The catalog module in `packages/core/src/domain/catalog.ts` provides search and lookup for the seeded LEGO catalog.
 
 ## seedCatalog
 
@@ -17,7 +17,7 @@ The catalog module in `src/domain/catalog.ts` provides search and lookup for the
 
 `searchCatalog` takes a query string and filters `seedCatalog` by matching against `number`, `name`, `theme`, `type`, and `barcode` fields. Empty query returns all items. Comparison is case-insensitive after trimming whitespace.
 
-Used by `filteredCatalog` in `App` component in `src/api/main.tsx`.
+Used by `filteredCatalog` in `App` component in `apps/web/src/app/App.tsx`.
 
 ## findCatalogItem
 
