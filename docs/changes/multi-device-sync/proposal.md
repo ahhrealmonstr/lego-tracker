@@ -27,7 +27,7 @@ M3
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │  UI layer (apps/web)                        │
 │  ├── SyncStatus component (indicator)       │
@@ -90,6 +90,7 @@ reconcileCollection(
 ```
 
 Rules applied in order:
+
 1. Remove any local item whose `id` is in `tombstoneIds`
 2. For each remote item: use remote if remote `updatedAt` ≥ local `updatedAt` (or no local copy); keep local if local is strictly newer. On equal timestamps remote wins (tie-break).
 3. Preserve local-only items (not yet synced to remote)
@@ -109,6 +110,7 @@ loadCollectionFromCloud(): Promise<{ items: OwnedLegoItem[]; tombstoneIds: strin
 Fetches all rows for the authenticated user. Splits into live items (`deleted_at IS NULL`) and tombstone IDs (`deleted_at IS NOT NULL`). Returns `null` if unauthenticated or Supabase is not configured.
 
 Updated `syncCollectionToCloud` to accept `SyncQueueEntry[]` instead of `OwnedLegoItem[]`, handling:
+
 - `upsert` entries → upsert row with `added_at`, `updated_at`
 - `delete` entries → upsert row with `deleted_at` set
 
@@ -136,6 +138,7 @@ async function reconcile(): Promise<void>
 ```
 
 Steps:
+
 1. `loadCollectionFromCloud()` — returns early (no error) if null
 2. `loadCollection()` from `storage.ts`
 3. `reconcileCollection(local, remote, tombstoneIds)` from `domain/sync.ts`
@@ -165,32 +168,32 @@ Mounts at app root (once). Mutation sites call `enqueueMutation` directly — th
 
 **`apps/web/src/components/SyncStatus.tsx`**
 
-| Status | Display |
-|---|---|
-| `idle` | nothing |
-| `syncing` | spinner + "Syncing…" |
-| `offline` | "Offline — changes will sync when reconnected" |
-| `error` | "Sync failed" + retry button |
+| Status    | Display                                          |
+| --------- | ------------------------------------------------ |
+| `idle`    | nothing                                          |
+| `syncing` | spinner + "Syncing…"                             |
+| `offline` | "Offline — changes will sync when reconnected"   |
+| `error`   | "Sync failed" + retry button                     |
 
 ---
 
 ## Error Handling
 
-| Failure | Behaviour |
-|---|---|
-| Network error during reconcile | Status → `'error'`; queue and localStorage untouched; retried on next cycle |
-| Unauthenticated / Supabase not configured | `reconcile()` returns early; status stays `'idle'`; no error shown |
-| Partial push failure (pull succeeded, push failed) | Merged collection saved locally; queue not cleared; push retried next cycle |
+| Failure                                            | Behaviour                                                                    |
+| -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Network error during reconcile                     | Status → `'error'`; queue and localStorage untouched; retried on next cycle  |
+| Unauthenticated / Supabase not configured          | `reconcile()` returns early; status stays `'idle'`; no error shown           |
+| Partial push failure (pull succeeded, push failed) | Merged collection saved locally; queue not cleared; push retried next cycle  |
 
 ---
 
 ## Testing
 
-| File | What |
-|---|---|
-| `packages/core/src/domain/sync.test.ts` | Unit tests for `reconcileCollection`: remote-newer wins, local-newer wins, local-only preserved, tombstone removes, tombstone beats local-newer, empty inputs |
-| `packages/core/src/services/supabase.test.ts` | Extend existing: `loadCollectionFromCloud` splits live/tombstone, returns null when unauthed, maps DB columns correctly |
-| `apps/web/src/services/syncQueue.test.ts` | enqueue appends, deduplicates by itemId, clear empties, load returns [] when absent |
+| File                                              | What                                                                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `packages/core/src/domain/sync.test.ts`           | Unit tests for `reconcileCollection`: remote-newer wins, local-newer wins, local-only preserved, tombstone removes, tombstone beats local-newer, empty inputs |
+| `packages/core/src/services/supabase.test.ts`     | Extend existing: `loadCollectionFromCloud` splits live/tombstone, returns null when unauthed, maps DB columns correctly  |
+| `apps/web/src/services/syncQueue.test.ts`         | enqueue appends, deduplicates by itemId, clear empties, load returns [] when absent                                      |
 
 `useSync` and `SyncStatus` are covered by Playwright E2E — not unit-tested here.
 
@@ -198,18 +201,18 @@ Mounts at app root (once). Mutation sites call `enqueueMutation` directly — th
 
 ## Files Changed
 
-| File | Change |
-|---|---|
-| `supabase/migrations/20260601000000_sync_columns.sql` | new |
-| `packages/core/src/types/lego.ts` | add `SyncQueueEntry`, `SyncStatus` |
-| `packages/core/src/domain/sync.ts` | new — `reconcileCollection` |
-| `packages/core/src/domain/sync.test.ts` | new |
-| `packages/core/src/services/supabase.ts` | add `loadCollectionFromCloud`, update `syncCollectionToCloud` |
-| `packages/core/src/services/supabase.test.ts` | extend |
-| `packages/core/src/index.ts` | re-export new types and functions |
-| `apps/web/src/services/syncQueue.ts` | new |
-| `apps/web/src/services/syncQueue.test.ts` | new |
-| `apps/web/src/services/reconcile.ts` | new |
-| `apps/web/src/hooks/useSync.ts` | new |
-| `apps/web/src/components/SyncStatus.tsx` | new |
-| `apps/web/src/App.tsx` | wire `useSync`, render `SyncStatus`, call `enqueueMutation` at mutation sites |
+| File                                                   | Change                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
+| `supabase/migrations/20260601000000_sync_columns.sql`  | new                                                          |
+| `packages/core/src/types/lego.ts`                      | add `SyncQueueEntry`, `SyncStatus`                           |
+| `packages/core/src/domain/sync.ts`                     | new — `reconcileCollection`                                  |
+| `packages/core/src/domain/sync.test.ts`                | new                                                          |
+| `packages/core/src/services/supabase.ts`               | add `loadCollectionFromCloud`, update `syncCollectionToCloud` |
+| `packages/core/src/services/supabase.test.ts`          | extend                                                       |
+| `packages/core/src/index.ts`                           | re-export new types and functions                            |
+| `apps/web/src/services/syncQueue.ts`                   | new                                                          |
+| `apps/web/src/services/syncQueue.test.ts`              | new                                                          |
+| `apps/web/src/services/reconcile.ts`                   | new                                                          |
+| `apps/web/src/hooks/useSync.ts`                        | new                                                          |
+| `apps/web/src/components/SyncStatus.tsx`               | new                                                          |
+| `apps/web/src/App.tsx`                                 | wire `useSync`, render `SyncStatus`, call `enqueueMutation` at mutation sites |
