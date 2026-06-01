@@ -20,13 +20,13 @@ status: in-progress
 
 ## Catalog Expansion
 
-- **Summary**: Integrated Rebrickable API and Supabase-backed catalog caching.
-- **Status**: in-progress
+- **Summary**: Integrated Rebrickable API and Supabase-backed catalog caching. Barcode lookup now chains seed catalog → Supabase cache → Rebrickable with auto-caching and full UI feedback.
+- **Status**: done
 - **Milestone**: M2
 - **Tasks**:
   - [x] Integrate external catalog API (e.g., Rebrickable)
   - [x] Implement catalog caching/mirroring in Supabase
-  - [ ] Enhance barcode lookup with real-world catalog matching
+  - [x] Enhance barcode lookup with real-world catalog matching
 
 ## Data Portability & Sync
 
