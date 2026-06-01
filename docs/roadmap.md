@@ -44,12 +44,12 @@ status: in-progress
 ## Data Portability & Sync
 
 - **Summary**: Implemented JSON/CSV export and basic cloud sync via Supabase.
-- **Status**: in-progress
+- **Status**: done
 - **Milestone**: M3
 - **Tasks**:
   - [x] Export collection to JSON/CSV
   - [x] Basic cloud sync with Supabase
-  - [ ] Multi-device state reconciliation
+  - [x] Multi-device state reconciliation
 
 ## Pick-a-Brick Parts List Export
 
