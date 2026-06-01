@@ -201,18 +201,18 @@ Mounts at app root (once). Mutation sites call `enqueueMutation` directly — th
 
 ## Files Changed
 
-| File                                                   | Change                                                       |
-| ------------------------------------------------------ | ------------------------------------------------------------ |
-| `supabase/migrations/20260601000000_sync_columns.sql`  | new                                                          |
-| `packages/core/src/types/lego.ts`                      | add `SyncQueueEntry`, `SyncStatus`                           |
-| `packages/core/src/domain/sync.ts`                     | new — `reconcileCollection`                                  |
-| `packages/core/src/domain/sync.test.ts`                | new                                                          |
-| `packages/core/src/services/supabase.ts`               | add `loadCollectionFromCloud`, update `syncCollectionToCloud` |
-| `packages/core/src/services/supabase.test.ts`          | extend                                                       |
-| `packages/core/src/index.ts`                           | re-export new types and functions                            |
-| `apps/web/src/services/syncQueue.ts`                   | new                                                          |
-| `apps/web/src/services/syncQueue.test.ts`              | new                                                          |
-| `apps/web/src/services/reconcile.ts`                   | new                                                          |
-| `apps/web/src/hooks/useSync.ts`                        | new                                                          |
-| `apps/web/src/components/SyncStatus.tsx`               | new                                                          |
-| `apps/web/src/App.tsx`                                 | wire `useSync`, render `SyncStatus`, call `enqueueMutation` at mutation sites |
+| File                                                   | Change                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `supabase/migrations/20260601000000_sync_columns.sql`  | new                                                                            |
+| `packages/core/src/types/lego.ts`                      | add `SyncQueueEntry`, `SyncStatus`                                             |
+| `packages/core/src/domain/sync.ts`                     | new — `reconcileCollection`                                                    |
+| `packages/core/src/domain/sync.test.ts`                | new                                                                            |
+| `packages/core/src/services/supabase.ts`               | add `loadCollectionFromCloud`, update `syncCollectionToCloud`                  |
+| `packages/core/src/services/supabase.test.ts`          | extend                                                                         |
+| `packages/core/src/index.ts`                           | re-export new types and functions                                              |
+| `apps/web/src/services/syncQueue.ts`                   | new                                                                            |
+| `apps/web/src/services/syncQueue.test.ts`              | new                                                                            |
+| `apps/web/src/services/reconcile.ts`                   | new                                                                            |
+| `apps/web/src/hooks/useSync.ts`                        | new                                                                            |
+| `apps/web/src/components/SyncStatus.tsx`               | new                                                                            |
+| `apps/web/src/App.tsx`                                 | wire `useSync`, render `SyncStatus`, call `enqueueMutation` at mutation sites  |
