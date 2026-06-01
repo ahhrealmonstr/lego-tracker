@@ -41,3 +41,31 @@
 ## Architecture
 
 See `docs/architecture.md` for detailed architectural decisions and dependency diagrams.
+
+## Oracle Test Personas
+
+Oracle is installed as a Claude Code plugin providing four AI test personas. No API key or additional configuration is required.
+
+### Installation
+
+If personas are not available, run:
+
+```text
+/plugin marketplace add https://github.com/bri-stevenski/oracle-test-ai-agent
+/plugin install oracle
+```
+
+Then `/reload-plugins` to apply.
+
+### Personas
+
+| Persona | Purpose | Target |
+| --- | --- | --- |
+| `oracle-test-author` | Generate Vitest or Playwright tests from natural language | `packages/core/src/` (Vitest) or `apps/web/tests/` (Playwright) |
+| `oracle-test-reviewer` | Review existing tests for quality and coverage gaps | Any test file |
+| `oracle-framework-advisor` | Recommend Vitest vs Playwright based on what is being tested | Call before authoring when the right layer is unclear |
+| `oracle-flake-hunter` | Identify flaky or brittle tests | `packages/core/src/**/*.test.ts` |
+
+### Test File Placement
+
+Vitest tests go alongside source in `packages/core/src/domain/` and `packages/core/src/services/`. Playwright tests go in `apps/web/tests/` (created on first E2E generation).
