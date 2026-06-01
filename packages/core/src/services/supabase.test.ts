@@ -1,18 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCachedItemByBarcode, getCachedItem, cacheCatalogItem, syncCollectionToCloud, isSupabaseConfigured } from './supabase';
+import {
+  getCachedItemByBarcode,
+  getCachedItem,
+  cacheCatalogItem,
+  syncCollectionToCloud,
+  loadCollectionFromCloud,
+  isSupabaseConfigured,
+} from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
 
 vi.mock('@supabase/supabase-js', () => ({ createClient: vi.fn() }));
 vi.mock('../config', () => ({ getConfig: vi.fn() }));
 
-function makeMockClient() {
-  const client = {
+function makeMockClient(queryResult: { data: any; error: any } = { data: null, error: null }) {
+  const client: any = {
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     upsert: vi.fn().mockResolvedValue({ error: null }),
+    update: vi.fn().mockReturnThis(),
+    // makes the builder thenable for multi-row queries: await client.from().select().eq()
+    then: (resolve: (v: any) => any) => Promise.resolve(queryResult).then(resolve),
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
     },
@@ -21,6 +31,29 @@ function makeMockClient() {
   return client;
 }
 
+const catalogRow = {
+  id: 'set-10305', type: 'set', number: '10305',
+  name: 'Lion Knights Castle', theme: 'Icons', year: 2022,
+  piece_count: 4514, retired: false, estimated_value: 399.99,
+  image_url: 'http://example.com/10305.jpg', barcode: '673419357562',
+};
+
+const collectionRow = {
+  item_id: 'set-10305',
+  status: 'collection',
+  acquired_quality: 'new',
+  saved_box: true,
+  build_status: 'not-started',
+  display_location: 'shelf',
+  notes: '',
+  missing_parts: '',
+  quantity: 1,
+  added_at: '2024-01-01T00:00:00.000Z',
+  updated_at: '2024-01-01T00:00:00.000Z',
+  deleted_at: null,
+  catalog_cache: catalogRow,
+};
+
 const ownedItem = {
   id: 'set-10305', type: 'set' as const, number: '10305',
   name: 'Lion Knights Castle', theme: 'Icons', year: 2022,
@@ -28,7 +61,7 @@ const ownedItem = {
   imageUrl: 'http://example.com/10305.jpg', barcode: '673419357562',
   status: 'collection' as const, acquiredQuality: 'new' as const,
   savedBox: true, buildStatus: 'not-started' as const,
-  displayLocation: '', notes: '', missingParts: '',
+  displayLocation: 'shelf', notes: '', missingParts: '',
   quantity: 1, addedAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -154,25 +187,78 @@ describe('Supabase Service', () => {
     });
   });
 
-  describe('syncCollectionToCloud', () => {
-    it('returns early without calling createClient when not configured', async () => {
+  describe('loadCollectionFromCloud', () => {
+    it('returns null when not configured', async () => {
       (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
-      await syncCollectionToCloud([ownedItem]);
+      expect(await loadCollectionFromCloud()).toBeNull();
       expect(createClient).not.toHaveBeenCalled();
     });
 
-    it('throws when user is not authenticated', async () => {
+    it('returns null when user is not authenticated', async () => {
       makeMockClient();
-      await expect(syncCollectionToCloud([ownedItem]))
-        .rejects.toThrow('Authentication required for cloud sync');
+      expect(await loadCollectionFromCloud()).toBeNull();
     });
 
-    it('upserts items with correct shape when authenticated', async () => {
+    it('returns empty items and tombstoneIds when collection is empty', async () => {
+      const client = makeMockClient({ data: [], error: null });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const result = await loadCollectionFromCloud();
+      expect(result).toEqual({ items: [], tombstoneIds: [] });
+    });
+
+    it('splits live rows into items and deleted rows into tombstoneIds', async () => {
+      const deletedRow = { ...collectionRow, item_id: 'set-99999', deleted_at: '2024-01-05T00:00:00.000Z', catalog_cache: { ...catalogRow, id: 'set-99999' } };
+      const client = makeMockClient({ data: [collectionRow, deletedRow], error: null });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const result = await loadCollectionFromCloud();
+      expect(result?.items).toHaveLength(1);
+      expect(result?.items[0].id).toBe('set-10305');
+      expect(result?.tombstoneIds).toEqual(['set-99999']);
+    });
+
+    it('maps DB column names to OwnedLegoItem camelCase fields', async () => {
+      const client = makeMockClient({ data: [collectionRow], error: null });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const result = await loadCollectionFromCloud();
+      const item = result?.items[0];
+      expect(item?.pieceCount).toBe(4514);
+      expect(item?.imageUrl).toBe('http://example.com/10305.jpg');
+      expect(item?.buildStatus).toBe('not-started');
+      expect(item?.displayLocation).toBe('shelf');
+      expect(item?.addedAt).toBe('2024-01-01T00:00:00.000Z');
+      expect(item?.updatedAt).toBe('2024-01-01T00:00:00.000Z');
+    });
+
+    it('returns null when query returns an error', async () => {
+      const client = makeMockClient({ data: null, error: { message: 'DB error' } });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      expect(await loadCollectionFromCloud()).toBeNull();
+    });
+  });
+
+  describe('syncCollectionToCloud', () => {
+    it('returns early without calling createClient when not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      await syncCollectionToCloud([{ type: 'upsert', item: ownedItem }]);
+      expect(createClient).not.toHaveBeenCalled();
+    });
+
+    it('returns early when queue is empty', async () => {
+      makeMockClient();
+      await syncCollectionToCloud([]);
+      expect(createClient).not.toHaveBeenCalled();
+    });
+
+    it('returns early when user is not authenticated', async () => {
       const client = makeMockClient();
-      client.auth.getUser.mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } }, error: null,
-      });
-      await syncCollectionToCloud([ownedItem]);
+      await syncCollectionToCloud([{ type: 'upsert', item: ownedItem }]);
+      expect(client.upsert).not.toHaveBeenCalled();
+    });
+
+    it('upserts items with correct shape for upsert entries', async () => {
+      const client = makeMockClient();
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      await syncCollectionToCloud([{ type: 'upsert', item: ownedItem }]);
       expect(client.from).toHaveBeenCalledWith('user_collection');
       expect(client.upsert).toHaveBeenCalledWith(
         expect.arrayContaining([
@@ -180,20 +266,28 @@ describe('Supabase Service', () => {
             item_id: 'set-10305',
             user_id: 'user-123',
             status: 'collection',
+            added_at: '2024-01-01T00:00:00.000Z',
+            updated_at: '2024-01-01T00:00:00.000Z',
+            deleted_at: null,
           }),
         ]),
         { onConflict: 'item_id,user_id' },
       );
     });
 
+    it('calls update with deleted_at for delete entries', async () => {
+      const client = makeMockClient();
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      await syncCollectionToCloud([{ type: 'delete', itemId: 'set-10305', deletedAt: '2024-02-01T00:00:00.000Z' }]);
+      expect(client.update).toHaveBeenCalledWith({ deleted_at: '2024-02-01T00:00:00.000Z' });
+    });
+
     it('throws when upsert returns an error', async () => {
       const client = makeMockClient();
-      client.auth.getUser.mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } }, error: null,
-      });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
       client.upsert.mockResolvedValueOnce({ error: { message: 'sync failed' } });
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      await expect(syncCollectionToCloud([ownedItem]))
+      await expect(syncCollectionToCloud([{ type: 'upsert', item: ownedItem }]))
         .rejects.toMatchObject({ message: 'sync failed' });
       spy.mockRestore();
     });
