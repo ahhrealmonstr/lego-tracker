@@ -1,3 +1,17 @@
+## 2026-05-31 — Test Coverage Fixes (Tasks 1–10)
+
+- [skill:harness-execution] [outcome:success] All 10 tasks complete. 71 packages/core tests + 13 apps/web tests. `supabase.test.ts` refactored to factory pattern; `rebrickable.test.ts` latent `retryAfter: NaN` bug fixed; 5 new test files created.
+- [skill:harness-execution] [outcome:gotcha] Root `npx vitest run` picks up `apps/web` test files which need jsdom — fails in the default node environment. Fix: added `vitest.config.ts` at root scoping `include` to `packages/**`. `apps/web` tests must be run via `cd apps/web && npx vitest run` or `-w apps/web`.
+- [skill:harness-execution] [outcome:gotcha] `collectionToCSV` only exports 13 columns — `notes` and `missingParts` are excluded. A test asserting CSV content on `notes` silently passes the wrong value; use `displayLocation` (which IS in the export) for CSV escape tests.
+- [skill:harness-execution] [outcome:decision] `npm install --save-dev vitest jsdom` in a workspace must be run with `--workspace=@lego-tracker/web --legacy-peer-deps` from the root — direct `cd apps/web && npm install` fails on react-native peer conflict from the mobile workspace.
+
+## 2026-05-31 — Oracle Integration (Tasks 1–4)
+
+- [skill:harness-execution] [outcome:success] All 4 tasks complete: Oracle plugin installed, AGENTS.md updated, personas smoke tested (14 Vitest tests pass), roadmap marked done.
+- [skill:harness-execution] [outcome:decision] `/plugin install oracle` (short form) works in CC 2.1.159 — `@oracle` qualifier is NOT required. Resolves upstream issue #173.
+- [skill:harness-execution] [outcome:gotcha] oracle-framework-advisor correctly distinguished domain (Vitest) vs UI flow (Playwright) with no prompting — and caught missing `data-testid` attributes on DetailPanel/ItemList buttons as a side finding.
+- [skill:harness-execution] [outcome:decision] oracle-test-author added 10 new `searchCatalog` tests to the existing `catalog.test.ts` (did not create a new file) — all 14 tests pass, including dedup/local-wins branch coverage.
+
 ## 2026-05-05 — Fix Harness CI Check Failures
 
 - [gotcha]: `harness ci check` analyzes `node_modules/` by default in both the `arch` and `perf` checks. The `ComplexityCollector` uses `findFiles("**/*.ts", rootDir)` without any exclusion filtering, causing third-party dependencies (`@babel/types`, `@supabase/*`, `typescript`, etc.) to be analyzed for cyclomatic complexity and function length violations. This floods the output with hundreds of errors and causes the `arch` check to fail.
