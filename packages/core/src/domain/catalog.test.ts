@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { findByBarcode, searchCatalog, seedCatalog } from './catalog';
-import { getCachedItemByBarcode, cacheCatalogItem } from '../services/supabase';
-import { findRebrickableByBarcode, searchRebrickable } from '../services/rebrickable';
+import { findByBarcode, searchCatalog, findCatalogItem, seedCatalog } from './catalog';
+import { getCachedItemByBarcode, cacheCatalogItem, getCachedItem } from '../services/supabase';
+import { findRebrickableByBarcode, searchRebrickable, findRebrickableItem } from '../services/rebrickable';
 
 vi.mock('../services/supabase', () => ({
   getCachedItemByBarcode: vi.fn(),
@@ -236,6 +236,71 @@ describe('Catalog Domain', () => {
       const results = await searchCatalog('zzz');
 
       expect(results).toHaveLength(0);
+    });
+  });
+
+  describe('findCatalogItem', () => {
+    it('returns seed item by id without hitting cache or Rebrickable', async () => {
+      const result = await findCatalogItem('set-10305');
+      expect(result?.id).toBe('set-10305');
+      expect(result?.name).toBe('Lion Knights Castle');
+      expect(getCachedItem).not.toHaveBeenCalled();
+      expect(findRebrickableItem).not.toHaveBeenCalled();
+    });
+
+    it('returns cached item when id is not in seed', async () => {
+      (getCachedItem as any).mockResolvedValueOnce({
+        id: 'set-99998', type: 'set', number: '99998', name: 'Cached Set',
+        theme: 'Test', year: 2020, pieceCount: 100, retired: false,
+        estimatedValue: 0, imageUrl: '',
+      });
+      const result = await findCatalogItem('set-99998');
+      expect(result?.id).toBe('set-99998');
+      expect(findRebrickableItem).not.toHaveBeenCalled();
+    });
+
+    it('fetches from Rebrickable for a set id not in seed or cache', async () => {
+      (getCachedItem as any).mockResolvedValueOnce(null);
+      const remoteItem = {
+        id: 'set-99997', type: 'set' as const, number: '99997', name: 'Remote Set',
+        theme: 'Test', year: 2020, pieceCount: 50, retired: false,
+        estimatedValue: 0, imageUrl: '',
+      };
+      (findRebrickableItem as any).mockResolvedValueOnce(remoteItem);
+      const result = await findCatalogItem('set-99997');
+      expect(result?.id).toBe('set-99997');
+      expect(findRebrickableItem).toHaveBeenCalledWith('99997', 'set');
+      expect(cacheCatalogItem).toHaveBeenCalledWith(remoteItem);
+    });
+
+    it('returns undefined for an id with an unrecognised type prefix', async () => {
+      (getCachedItem as any).mockResolvedValueOnce(null);
+      const result = await findCatalogItem('part-12345');
+      expect(result).toBeUndefined();
+      expect(findRebrickableItem).not.toHaveBeenCalled();
+    });
+
+    it('returns undefined when seed, cache, and Rebrickable all miss', async () => {
+      (getCachedItem as any).mockResolvedValueOnce(null);
+      (findRebrickableItem as any).mockResolvedValueOnce(null);
+      expect(await findCatalogItem('set-00000')).toBeUndefined();
+    });
+  });
+
+  describe('findByBarcode error paths', () => {
+    it('propagates rejection from getCachedItemByBarcode', async () => {
+      (getCachedItemByBarcode as any).mockRejectedValueOnce(new Error('DB down'));
+      await expect(findByBarcode('9876543210987')).rejects.toThrow('DB down');
+    });
+
+    it('resolves even when background cacheCatalogItem rejects', async () => {
+      (getCachedItemByBarcode as any).mockResolvedValueOnce(null);
+      (findRebrickableByBarcode as any).mockResolvedValueOnce({
+        id: 'set-x', type: 'set', number: 'x', name: 'X', theme: 'T',
+        year: 2020, pieceCount: 1, retired: false, estimatedValue: 0, imageUrl: '',
+      });
+      (cacheCatalogItem as any).mockRejectedValueOnce(new Error('cache fail'));
+      await expect(findByBarcode('9876543210987')).resolves.toBeDefined();
     });
   });
 });
