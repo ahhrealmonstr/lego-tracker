@@ -28,6 +28,7 @@ export function ItemList({
       {listItems.map((item) => (
         <article
           key={item.id}
+          data-testid={`item-row-${item.id}`}
           className={selectedItemId === item.id ? 'item-row selected' : 'item-row'}
           onClick={() => onSelect(item.id)}
           tabIndex={0}
@@ -46,6 +47,7 @@ export function ItemList({
             <button
               className="mini-action"
               type="button"
+              data-testid={`item-add-${item.id}`}
               title="Add to collection"
               onClick={(event) => {
                 event.stopPropagation();

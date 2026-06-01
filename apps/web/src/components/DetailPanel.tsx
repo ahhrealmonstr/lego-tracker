@@ -50,10 +50,10 @@ export function DetailPanel({
             <span>{item.retired ? 'Retired' : 'Active'}</span>
           </div>
           <div className="action-row">
-            <button type="button" onClick={() => onAdd(item, 'collection')}>
+            <button type="button" data-testid="detail-add-to-collection" onClick={() => onAdd(item, 'collection')}>
               <Plus size={18} /> Add to collection
             </button>
-            <button type="button" className="secondary" onClick={() => onAdd(item, 'wishlist')}>
+            <button type="button" className="secondary" data-testid="detail-add-to-wishlist" onClick={() => onAdd(item, 'wishlist')}>
               <Heart size={18} /> Add to wishlist
             </button>
           </div>
@@ -63,7 +63,7 @@ export function DetailPanel({
       {ownedItem ? (
         <form className="detail-form">
           <Field label="List">
-            <select value={ownedItem.status} onChange={(event) => onUpdate({ status: event.target.value as CollectionStatus })}>
+            <select data-testid="detail-status-select" value={ownedItem.status} onChange={(event) => onUpdate({ status: event.target.value as CollectionStatus })}>
               {Object.entries(statusLabels).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -73,6 +73,7 @@ export function DetailPanel({
           </Field>
           <Field label="Set quality when bought">
             <select
+              data-testid="detail-quality-select"
               value={ownedItem.acquiredQuality}
               onChange={(event) => onUpdate({ acquiredQuality: event.target.value as AcquisitionQuality })}
             >
@@ -84,7 +85,7 @@ export function DetailPanel({
             </select>
           </Field>
           <Field label="Building status">
-            <select value={ownedItem.buildStatus} onChange={(event) => onUpdate({ buildStatus: event.target.value as BuildStatus })}>
+            <select data-testid="detail-build-status-select" value={ownedItem.buildStatus} onChange={(event) => onUpdate({ buildStatus: event.target.value as BuildStatus })}>
               {Object.entries(buildStatusLabels).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -94,6 +95,7 @@ export function DetailPanel({
           </Field>
           <Field label="Display location">
             <input
+              data-testid="detail-display-location"
               value={ownedItem.displayLocation}
               onChange={(event) => onUpdate({ displayLocation: event.target.value })}
               placeholder="Office shelf, living room, storage bin"
@@ -101,6 +103,7 @@ export function DetailPanel({
           </Field>
           <Field label="Quantity">
             <input
+              data-testid="detail-quantity"
               min="1"
               type="number"
               value={ownedItem.quantity}
@@ -109,6 +112,7 @@ export function DetailPanel({
           </Field>
           <label className="checkbox-field">
             <input
+              data-testid="detail-saved-box"
               type="checkbox"
               checked={ownedItem.savedBox}
               onChange={(event) => onUpdate({ savedBox: event.target.checked })}
@@ -117,15 +121,16 @@ export function DetailPanel({
           </label>
           <Field label="Missing parts">
             <textarea
+              data-testid="detail-missing-parts"
               value={ownedItem.missingParts}
               onChange={(event) => onUpdate({ missingParts: event.target.value })}
               placeholder="List part IDs, colors, or notes"
             />
           </Field>
           <Field label="Notes">
-            <textarea value={ownedItem.notes} onChange={(event) => onUpdate({ notes: event.target.value })} />
+            <textarea data-testid="detail-notes" value={ownedItem.notes} onChange={(event) => onUpdate({ notes: event.target.value })} />
           </Field>
-          <button className="danger" type="button" onClick={onRemove}>
+          <button className="danger" type="button" data-testid="detail-remove" onClick={onRemove}>
             Remove from lists
           </button>
         </form>

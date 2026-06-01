@@ -72,7 +72,7 @@ export function BarcodeScanner({
       <section className="scanner-modal">
         <div className="modal-heading">
           <h2>Scan barcode</h2>
-          <button className="icon-button" type="button" title="Close" onClick={onClose} disabled={isScanning}>
+          <button className="icon-button" type="button" data-testid="scanner-close" title="Close" onClick={onClose} disabled={isScanning}>
             <X size={20} />
           </button>
         </div>
@@ -83,12 +83,13 @@ export function BarcodeScanner({
         <p>{isScanning ? 'Looking up item details...' : statusMessage || browserMessage}</p>
         <div className="manual-barcode">
           <input
+            data-testid="scanner-barcode-input"
             value={manualCode}
             onChange={(event) => setManualCode(event.target.value)}
             placeholder="Enter barcode"
             disabled={isScanning}
           />
-          <button type="button" onClick={() => onDetected(manualCode)} disabled={isScanning}>
+          <button data-testid="scanner-search" type="button" onClick={() => onDetected(manualCode)} disabled={isScanning}>
             {isScanning ? 'Searching...' : 'Search'}
           </button>
         </div>
