@@ -45,10 +45,10 @@ The catalog is seeded in `seedCatalog` in `packages/core/src/domain/catalog.ts` 
 - `notes`: Freeform ownership notes
 - `missingParts`: Missing part IDs, colors, or notes
 - `quantity`: Number of duplicates
-- `addedAt`: ISO timestamp when first added
-- `updatedAt`: ISO timestamp of last modification
+- `addedAt`: ISO timestamp when first added — persisted to `user_collection.added_at` in Supabase
+- `updatedAt`: ISO timestamp of last modification — used as the LWW key in multi-device reconciliation
 
-Created by `createOwnedItem` in `packages/core/src/domain/collection.ts` and persisted by `saveCollection` in `apps/web/src/services/storage.ts`.
+Created by `createOwnedItem` in `packages/core/src/domain/collection.ts`, persisted locally by `saveCollection` in `apps/web/src/services/storage.ts`, and synced to Supabase via `syncCollectionToCloud` in `packages/core/src/services/supabase.ts`.
 
 ### CollectionSummary
 
@@ -60,6 +60,19 @@ Created by `createOwnedItem` in `packages/core/src/domain/collection.ts` and per
 - `completeBuilds`: Count of items with `buildStatus === 'complete'`
 
 Computed by `summarizeCollection` in `packages/core/src/domain/collection.ts`.
+
+### SyncQueueEntry
+
+`SyncQueueEntry` is a discriminated union for offline mutation buffering:
+
+- `{ type: 'upsert'; item: OwnedLegoItem }` — an add or edit to push
+- `{ type: 'delete'; itemId: string; deletedAt: string }` — a tombstone deletion to push
+
+Used by `syncCollectionToCloud` in `packages/core/src/services/supabase.ts` and stored in localStorage by `apps/web/src/services/syncQueue.ts`.
+
+### SyncStatus
+
+`SyncStatus` is `'idle' | 'syncing' | 'error' | 'offline'`. Drives the `SyncStatus` UI component and returned by the `useSync` hook.
 
 ## Status and Quality Enums
 

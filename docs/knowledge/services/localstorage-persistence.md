@@ -13,6 +13,8 @@ The storage module in `apps/web/src/services/storage.ts` handles browser localSt
 
 `storageKey` is the localStorage key `'brick-ledger.collection.v1'`. All collection data is stored under this single key as JSON.
 
+A second localStorage key `'brick-ledger.sync-queue.v1'` is managed by `apps/web/src/services/syncQueue.ts` and holds pending `SyncQueueEntry[]` mutations buffered while offline. It is separate from the collection key and cleared only after a successful cloud push.
+
 ## loadCollection
 
 `loadCollection` reads from localStorage using `storageKey`. Returns empty array if key is missing or JSON is invalid. Parses JSON and filters entries through `isOwnedLegoItem` to reject malformed data. Called on app initialization in `App` via `useState` initializer and ensures corrupted localStorage data never reaches the UI.

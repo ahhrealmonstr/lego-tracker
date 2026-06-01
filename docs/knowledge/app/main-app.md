@@ -13,11 +13,13 @@ The `apps/web/src/app/index.tsx` is the React entry point. The core application 
 
 `App` (in `App.tsx`) is the main container component managing application state: `query` for search, `items` for owned items (initialized from `loadCollection`), `activeView` for tab state (ViewMode: `'catalog'`, `'collection'`, or `'wishlist'`), `selectedItemId` for the currently selected item, `scannerOpen` for barcode scanner visibility, and `scanMessage` for scan feedback.
 
-Key derived values: `summary` (via `useMemo` with `summarizeCollection`), `selectedOwnedItem`, `selectedCatalogItem`, `selectedItem`, `filteredCatalog` (via `useMemo` with `searchCatalog`), and `visibleOwnedItems`.
+Key derived values: `summary` (via `useMemo` with `summarizeCollection`), `selectedOwnedItem`, `selectedCatalogItem`, `selectedItem`, `catalogResults` (search results updated by a 300ms debounced effect), and `visibleOwnedItems`.
 
-Actions: `addItem` creates owned items via `createOwnedItem` and upserts, `updateSelectedItem` patches owned items via `upsertOwnedItem`, `removeSelectedItem` filters out the selected item, and `handleBarcode` processes barcode detection by calling `findByBarcode` and either adding the matched item or filling the search query.
+Actions: `addItem` creates owned items via `createOwnedItem`, upserts them, and calls `enqueueMutation({ type: 'upsert' })`. `updateSelectedItem` patches owned items and enqueues an upsert with a fresh `updatedAt`. `removeSelectedItem` filters out the selected item and enqueues `{ type: 'delete' }`. `handleBarcode` processes barcode detection by calling `findByBarcode` and either adding the matched item or filling the search query.
 
-Renders `Stat` components for summary counters, a search toolbar with barcode button, tab navigation (`Catalog`, `Collection`, `Wishlist`), `ItemList`, `DetailPanel`, and `BarcodeScanner`.
+Sync: `App` calls `useSync()` to obtain `{ status: SyncStatus, triggerSync }`. The `SyncStatus` component is rendered in the sidebar to show syncing/offline/error states. There is no manual sync button — reconciliation happens automatically on load, every 5 minutes, and on reconnect.
+
+Renders `Stat` components for summary counters, `SyncStatus` for sync state, a search toolbar with barcode button, tab navigation (`Catalog`, `Collection`, `Wishlist`), `ItemList`, `DetailPanel`, and `BarcodeScanner`.
 
 ## Stat
 
