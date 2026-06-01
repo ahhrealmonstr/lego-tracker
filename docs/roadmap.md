@@ -51,6 +51,21 @@ status: in-progress
   - [x] Basic cloud sync with Supabase
   - [x] Multi-device state reconciliation
 
+## UI Polish
+
+- **Summary**: Refine the web app visual design — reduce visual weight, improve spacing and typography rhythm, add subtle depth, and ensure the dark mode palette feels intentional rather than just inverted.
+- **Status**: backlog
+- **Milestone**: M4
+- **Tasks**:
+  - [ ] Audit spacing — tighten sidebar padding, reduce card border-radius uniformity, add consistent vertical rhythm
+  - [ ] Typography — introduce size/weight hierarchy for set names vs metadata vs labels
+  - [ ] Stat cards — replace flat bordered boxes with subtle shadow or background gradient
+  - [ ] Item list — add hover transition depth (shadow lift instead of just bg change)
+  - [ ] Detail panel — improve image presentation (soft shadow, better aspect-ratio handling)
+  - [ ] Badge/pill styling — refine price and status pill visual weight
+  - [ ] Dark mode fine-tuning — verify contrast ratios, adjust muted text tones, check form inputs
+  - [ ] Responsive polish — sidebar collapse behaviour on tablet, better mobile detail panel
+
 ## Pick-a-Brick Parts List Export
 
 - **Summary**: Generate and export Lego Pick-a-Brick–compatible parts lists from any set info page, with optional per-bag breakdowns.
