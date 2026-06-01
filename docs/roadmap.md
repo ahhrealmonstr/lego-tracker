@@ -18,6 +18,19 @@ status: in-progress
   - [x] Complete `AGENTS.md` for Harness validation
   - [x] Initialize `docs/roadmap.md`
 
+## Oracle Test Persona Integration
+
+- **Summary**: Install Oracle as a Claude Code plugin with four test personas
+  (test-author, test-reviewer, framework-advisor, flake-hunter). Document usage
+  in AGENTS.md. No CLI or CI gate in this iteration.
+- **Status**: done
+- **Milestone**: Current Work
+- **Spec**: docs/changes/oracle-integration/proposal.md
+- **Tasks**:
+  - [x] Install Oracle plugin via Claude Code marketplace
+  - [x] Add Oracle section to AGENTS.md
+  - [x] Smoke test all four personas
+
 ## Catalog Expansion
 
 - **Summary**: Integrated Rebrickable API and Supabase-backed catalog caching. Barcode lookup now chains seed catalog → Supabase cache → Rebrickable with auto-caching and full UI feedback.
