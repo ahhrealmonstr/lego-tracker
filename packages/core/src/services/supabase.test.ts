@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCachedItemByBarcode, getCachedItem, cacheCatalogItem } from './supabase';
+import { getCachedItemByBarcode, getCachedItem, cacheCatalogItem, syncCollectionToCloud, isSupabaseConfigured } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
 
@@ -20,6 +20,18 @@ function makeMockClient() {
   (createClient as any).mockReturnValue(client);
   return client;
 }
+
+const ownedItem = {
+  id: 'set-10305', type: 'set' as const, number: '10305',
+  name: 'Lion Knights Castle', theme: 'Icons', year: 2022,
+  pieceCount: 4514, retired: false, estimatedValue: 399.99,
+  imageUrl: 'http://example.com/10305.jpg', barcode: '673419357562',
+  status: 'collection' as const, acquiredQuality: 'new' as const,
+  savedBox: true, buildStatus: 'not-started' as const,
+  displayLocation: '', notes: '', missingParts: '',
+  quantity: 1, addedAt: '2024-01-01T00:00:00.000Z',
+  updatedAt: '2024-01-01T00:00:00.000Z',
+};
 
 describe('Supabase Service', () => {
   beforeEach(() => {
@@ -139,6 +151,69 @@ describe('Supabase Service', () => {
       (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
       await cacheCatalogItem(catalogItem);
       expect(createClient).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('syncCollectionToCloud', () => {
+    it('returns early without calling createClient when not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      await syncCollectionToCloud([ownedItem]);
+      expect(createClient).not.toHaveBeenCalled();
+    });
+
+    it('throws when user is not authenticated', async () => {
+      makeMockClient();
+      await expect(syncCollectionToCloud([ownedItem]))
+        .rejects.toThrow('Authentication required for cloud sync');
+    });
+
+    it('upserts items with correct shape when authenticated', async () => {
+      const client = makeMockClient();
+      client.auth.getUser.mockResolvedValueOnce({
+        data: { user: { id: 'user-123' } }, error: null,
+      });
+      await syncCollectionToCloud([ownedItem]);
+      expect(client.from).toHaveBeenCalledWith('user_collection');
+      expect(client.upsert).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            item_id: 'set-10305',
+            user_id: 'user-123',
+            status: 'collection',
+          }),
+        ]),
+        { onConflict: 'item_id,user_id' },
+      );
+    });
+
+    it('throws when upsert returns an error', async () => {
+      const client = makeMockClient();
+      client.auth.getUser.mockResolvedValueOnce({
+        data: { user: { id: 'user-123' } }, error: null,
+      });
+      client.upsert.mockResolvedValueOnce({ error: { message: 'sync failed' } });
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await expect(syncCollectionToCloud([ownedItem]))
+        .rejects.toMatchObject({ message: 'sync failed' });
+      spy.mockRestore();
+    });
+  });
+
+  describe('isSupabaseConfigured', () => {
+    it('returns true when url and key are present', () => {
+      expect(isSupabaseConfigured()).toBe(true);
+    });
+
+    it('returns false when supabaseUrl is null', () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: 'key' });
+      expect(isSupabaseConfigured()).toBe(false);
+    });
+
+    it('returns false when supabaseAnonKey is null', () => {
+      (getConfig as any).mockReturnValue({
+        supabaseUrl: 'https://x.supabase.co', supabaseAnonKey: null,
+      });
+      expect(isSupabaseConfigured()).toBe(false);
     });
   });
 });
