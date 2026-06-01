@@ -3,14 +3,11 @@ import {
   Barcode,
   Box,
   Check,
-  Cloud,
-  CloudOff,
   Download,
   Heart,
   LayoutGrid,
   Library,
   PackageCheck,
-  RefreshCw,
   Search,
 } from 'lucide-react';
 import {
@@ -22,19 +19,20 @@ import {
   createOwnedItem,
   downloadBlob,
   findByBarcode,
-  isSupabaseConfigured,
   searchCatalog,
   seedCatalog,
   setConfig,
   summarizeCollection,
-  syncCollectionToCloud,
   upsertOwnedItem,
 } from '@lego-tracker/core';
 import { loadCollection, saveCollection } from '../services/storage';
+import { enqueueMutation } from '../services/syncQueue';
 import { BarcodeScanner } from '../components/BarcodeScanner';
 import { ItemList } from '../components/ItemList';
 import { DetailPanel } from '../components/DetailPanel';
 import { Stat } from '../components/Stat';
+import { SyncStatus } from '../components/SyncStatus';
+import { useSync } from '../hooks/useSync';
 
 // Initialize core config
 setConfig({
@@ -56,11 +54,11 @@ export function App() {
   const [selectedItemId, setSelectedItemId] = useState<string>(seedCatalog[0]?.id ?? '');
   const [catalogResults, setCatalogResults] = useState<LegoCatalogItem[]>(seedCatalog);
   const [isSearching, setIsSearching] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>(isSupabaseConfigured() ? 'idle' : 'error');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
   const [isScanningBarcode, setIsScanningBarcode] = useState(false);
+
+  const { status: syncStatus, triggerSync } = useSync();
 
   useEffect(() => {
     saveCollection(items);
@@ -86,35 +84,25 @@ export function App() {
   const selectedItem = selectedOwnedItem ?? selectedCatalogItem;
   const visibleOwnedItems = items.filter((item) => item.status === activeView);
 
-  async function handleSync() {
-    if (!isSupabaseConfigured()) return;
-    setIsSyncing(true);
-    try {
-      await syncCollectionToCloud(items);
-      setSyncStatus('success');
-      setTimeout(() => setSyncStatus('idle'), 3000);
-    } catch {
-      setSyncStatus('error');
-    } finally {
-      setIsSyncing(false);
-    }
-  }
-
   function addItem(item: LegoCatalogItem, status: CollectionStatus) {
     const ownedItem = createOwnedItem(item, status);
     setItems((currentItems) => upsertOwnedItem(currentItems, ownedItem));
+    enqueueMutation({ type: 'upsert', item: ownedItem });
     setSelectedItemId(item.id);
     setActiveView(status);
   }
 
   function updateSelectedItem(patch: Partial<OwnedLegoItem>) {
     if (!selectedOwnedItem) return;
-    setItems((currentItems) => upsertOwnedItem(currentItems, { ...selectedOwnedItem, ...patch }));
+    const updatedItem = { ...selectedOwnedItem, ...patch, updatedAt: new Date().toISOString() };
+    setItems((currentItems) => upsertOwnedItem(currentItems, updatedItem));
+    enqueueMutation({ type: 'upsert', item: updatedItem });
   }
 
   function removeSelectedItem() {
     if (!selectedOwnedItem) return;
     setItems((currentItems) => currentItems.filter((item) => item.id !== selectedOwnedItem.id));
+    enqueueMutation({ type: 'delete', itemId: selectedOwnedItem.id, deletedAt: new Date().toISOString() });
     setActiveView('catalog');
   }
 
@@ -135,7 +123,7 @@ export function App() {
       setScannerOpen(false);
       setScanMessage(`Found ${match.name}`);
       addItem(match, 'collection');
-    } catch (error) {
+    } catch {
       setScanMessage(`Error searching for barcode ${barcode}.`);
     } finally {
       setIsScanningBarcode(false);
@@ -169,14 +157,9 @@ export function App() {
           <button className="text-button" type="button" onClick={() => downloadBlob(collectionToCSV(items), 'lego-collection.csv', 'text/csv')}>
             <Download size={14} /> CSV
           </button>
-
-          {isSupabaseConfigured() && (
-            <button className="text-button" type="button" disabled={isSyncing} onClick={handleSync}>
-              {isSyncing ? <RefreshCw size={14} className="spinning" /> : syncStatus === 'success' ? <Check size={14} /> : syncStatus === 'error' ? <CloudOff size={14} /> : <Cloud size={14} />}
-              {isSyncing ? 'Syncing...' : syncStatus === 'success' ? 'Synced' : syncStatus === 'error' ? 'Failed' : 'Sync'}
-            </button>
-          )}
         </div>
+
+        <SyncStatus status={syncStatus} onRetry={triggerSync} />
 
         <div className="toolbar">
           <label className="search-box">
