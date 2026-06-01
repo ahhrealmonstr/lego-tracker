@@ -2,6 +2,7 @@ export * from './config';
 export * from './types/lego';
 export * from './domain/catalog';
 export * from './domain/collection';
+export * from './domain/sync';
 export * from './domain/options';
 export * from './domain/export';
 export * from './services/rebrickable';
