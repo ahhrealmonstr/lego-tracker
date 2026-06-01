@@ -45,3 +45,9 @@ export interface CollectionSummary {
   totalEstimatedValue: number;
   completeBuilds: number;
 }
+
+export type SyncStatus = 'idle' | 'syncing' | 'error' | 'offline';
+
+export type SyncQueueEntry =
+  | { type: 'upsert'; item: OwnedLegoItem }
+  | { type: 'delete'; itemId: string; deletedAt: string };
