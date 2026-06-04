@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, MapPin, Plus } from 'lucide-react';
+import { PartsList } from './PartsList';
 import {
   AcquisitionQuality,
   BuildStatus,
@@ -140,6 +141,8 @@ export function DetailPanel({
           Add this item to track condition, box status, build progress, display location, and missing parts.
         </div>
       )}
+
+      {item.type === 'set' && <PartsList item={item} />}
     </section>
   );
 }
