@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "snapshots": [
+    {
+      "capturedAt": "2026-05-05T14:05:45.891Z",
+      "commitHash": "bae49af4005e3368f50b71c9ad8916e21d4fbf6d",
+      "securityScore": 100,
+      "totalFindings": 0,
+      "bySeverity": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "byCategory": {},
+      "supplyChain": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0,
+        "info": 0,
+        "total": 0
+      },
+      "suppressionCount": 0,
+      "findingIds": []
+    },
+    {
+      "capturedAt": "2026-05-08T09:24:39.042Z",
+      "commitHash": "0a2512cbf68b4209973cb3a062738984f9fcf4da",
+      "securityScore": 100,
+      "totalFindings": 0,
+      "bySeverity": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "byCategory": {},
+      "supplyChain": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0,
+        "info": 0,
+        "total": 0
+      },
+      "suppressionCount": 0,
+      "findingIds": []
+    },
+    {
+      "capturedAt": "2026-06-01T07:48:54.200Z",
+      "commitHash": "17617f88d6e1aebb122d2806912acd144ded3d06",
+      "securityScore": 100,
+      "totalFindings": 0,
+      "bySeverity": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "byCategory": {},
+      "supplyChain": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0,
+        "info": 0,
+        "total": 0
+      },
+      "suppressionCount": 0,
+      "findingIds": []
+    },
+    {
+      "capturedAt": "2026-06-04T00:19:58.253Z",
+      "commitHash": "359eda825cb3505c1f139c62d005d0892afa145d",
+      "securityScore": 100,
+      "totalFindings": 0,
+      "bySeverity": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "byCategory": {},
+      "supplyChain": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0,
+        "info": 0,
+        "total": 0
+      },
+      "suppressionCount": 0,
+      "findingIds": []
+    }
+  ],
+  "findingLifecycles": []
+}

@@ -1,3 +1,11 @@
+## 2026-06-01 — Multi-Device Sync (Tasks 1–9)
+
+- [skill:harness-execution] [outcome:success] All 9 tasks complete. 88 core tests + 21 web tests. DB migration, reconcileCollection, loadCollectionFromCloud, syncQueue, reconcile orchestration, useSync hook, SyncStatus component, and App wiring all landed on main.
+- [skill:harness-execution] [outcome:gotcha] harness 2.7.1 regression: `harness validate` looks for AGENTS.md in workspace subdirectories (apps/web/) in addition to the root. Fix: created `apps/web/AGENTS.md` stub pointing to root.
+- [skill:harness-execution] [outcome:decision] `syncCollectionToCloud` empty-queue guard must come before `getClient()` call, otherwise `createClient` fires even for empty queues — broke a test asserting it was never called.
+- [skill:harness-execution] [outcome:decision] `user_collection` only stores a FK to `catalog_cache`. Pull uses nested select `*, catalog_cache!item_id(*)` to reconstruct full OwnedLegoItem in one query; N+1 would be too slow.
+- [skill:harness-execution] [outcome:decision] Mock client for Supabase multi-row queries needs a `then()` method to be thenable (Supabase query builder is PromiseLike). Added `then: (resolve) => Promise.resolve(queryResult).then(resolve)` to `makeMockClient`. Existing single-row tests use `.maybeSingle()` and are unaffected.
+
 ## 2026-05-31 — Test Coverage Fixes (Tasks 1–10)
 
 - [skill:harness-execution] [outcome:success] All 10 tasks complete. 71 packages/core tests + 13 apps/web tests. `supabase.test.ts` refactored to factory pattern; `rebrickable.test.ts` latent `retryAfter: NaN` bug fixed; 5 new test files created.
