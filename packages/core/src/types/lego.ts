@@ -52,6 +52,11 @@ export type SyncQueueEntry =
   | { type: 'upsert'; item: OwnedLegoItem }
   | { type: 'delete'; itemId: string; deletedAt: string };
 
+export interface InstructionBooklet {
+  title: string;
+  url: string;
+}
+
 export interface SetPart {
   partNum: string;
   partName: string;

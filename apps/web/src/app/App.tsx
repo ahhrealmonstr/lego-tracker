@@ -38,7 +38,7 @@ import { useSync } from '../hooks/useSync';
 setConfig({
   rebrickableApiKey: import.meta.env.VITE_REBRICKABLE_API_KEY,
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
 });
 
 export type ViewMode = 'collection' | 'wishlist' | 'catalog';
