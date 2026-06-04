@@ -44,7 +44,8 @@ export function parseThemes(csv: string): Map<string, string> {
 
 export function mapSetRow(row: SetCsvRow, themeMap: Map<string, string>): CatalogRow | null {
   const year = parseInt(row.year, 10);
-  if (year < 1932) return null;
+  const currentYear = new Date().getFullYear();
+  if (year < 1932 || year > currentYear) return null;
   return {
     id: `set-${row.set_num}`,
     type: 'set',

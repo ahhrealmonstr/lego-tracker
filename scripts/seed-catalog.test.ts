@@ -51,6 +51,11 @@ describe('mapSetRow', () => {
     expect(mapSetRow({ ...baseRow, year: '0' }, themeMap)).toBeNull();
   });
 
+  it('returns null for year in the future', () => {
+    const futureYear = String(new Date().getFullYear() + 1);
+    expect(mapSetRow({ ...baseRow, year: futureYear }, themeMap)).toBeNull();
+  });
+
   it('uses placeholder image when set_img_url is empty', () => {
     const row = mapSetRow({ ...baseRow, set_img_url: '' }, themeMap);
     expect(row?.image_url).toContain('placeholder');
