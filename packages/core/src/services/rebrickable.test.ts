@@ -198,5 +198,14 @@ describe('Rebrickable Service', () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
       expect(await fetchSetInventorySets('75313-1')).toEqual([]);
     });
+
+    it('propagates RateLimitError', async () => {
+      mockFetch.mockResolvedValueOnce({
+        status: 429, ok: false,
+        headers: { get: (k: string) => k === 'Retry-After' ? '45' : null },
+      });
+      await expect(fetchSetInventorySets('75313-1'))
+        .rejects.toMatchObject({ retryAfter: 45 });
+    });
   });
 });
