@@ -1,6 +1,5 @@
-// apps/web/src/components/PartsList.tsx
 import React from 'react';
-import { type LegoCatalogItem, type SetPart } from '@lego-tracker/core';
+import { type LegoCatalogItem, type SetPart, partsToCSV, partsToBSX, downloadBlob } from '@lego-tracker/core';
 import { useSetParts } from '../hooks/useSetParts';
 
 export function PartsList({ item }: { item: LegoCatalogItem }) {
@@ -24,15 +23,57 @@ export function PartsList({ item }: { item: LegoCatalogItem }) {
     return acc;
   }, {});
 
+  const allParts = [...nonSpares, ...spares];
+
   return (
     <section className="parts-list" data-testid="parts-list">
-      <h3 className="parts-heading">Parts</h3>
+      <div className="parts-list-header">
+        <h3 className="parts-heading">Parts</h3>
+        <div className="parts-export">
+          <button
+            type="button"
+            className="text-button"
+            data-testid="parts-export-csv"
+            onClick={() => downloadBlob(partsToCSV(allParts), `${item.number}-parts.csv`, 'text/csv')}
+          >
+            CSV
+          </button>
+          <button
+            type="button"
+            className="text-button"
+            data-testid="parts-export-bsx"
+            onClick={() => downloadBlob(partsToBSX(allParts), `${item.number}-parts.bsx`, 'application/xml')}
+          >
+            BSX
+          </button>
+        </div>
+      </div>
       {hasNamedBags ? (
         Object.entries(byBag)
           .sort(([a], [b]) => Number(a) - Number(b))
           .map(([bagKey, bagParts]) => (
             <details key={bagKey} className="parts-bag">
-              <summary>Bag {bagKey} <span className="parts-count">({bagParts.length})</span></summary>
+              <summary>
+                Bag {bagKey} <span className="parts-count">({bagParts.length})</span>
+                <span className="parts-bag-export">
+                  <button
+                    type="button"
+                    className="text-button"
+                    data-testid={`parts-bag-${bagKey}-export-csv`}
+                    onClick={e => { e.preventDefault(); downloadBlob(partsToCSV(bagParts), `${item.number}-bag${bagKey}.csv`, 'text/csv'); }}
+                  >
+                    CSV
+                  </button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    data-testid={`parts-bag-${bagKey}-export-bsx`}
+                    onClick={e => { e.preventDefault(); downloadBlob(partsToBSX(bagParts), `${item.number}-bag${bagKey}.bsx`, 'application/xml'); }}
+                  >
+                    BSX
+                  </button>
+                </span>
+              </summary>
               <div className="parts-grid">
                 {bagParts.map(p => (
                   <PartCard key={`${p.partNum}-${p.colorName}`} part={p} />
