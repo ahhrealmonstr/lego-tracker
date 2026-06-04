@@ -1,18 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { findByBarcode, searchCatalog, findCatalogItem, seedCatalog } from './catalog';
-import { getCachedItemByBarcode, cacheCatalogItem, getCachedItem } from '../services/supabase';
-import { findRebrickableByBarcode, searchRebrickable, findRebrickableItem } from '../services/rebrickable';
+import { findByBarcode, searchCatalog, findCatalogItem, seedCatalog, getOrFetchSetParts } from './catalog';
+import { getCachedItemByBarcode, cacheCatalogItem, getCachedItem, getSetParts, cacheSetParts } from '../services/supabase';
+import { findRebrickableByBarcode, searchRebrickable, findRebrickableItem, fetchSetInventorySets, fetchPartsForInventory } from '../services/rebrickable';
 
 vi.mock('../services/supabase', () => ({
   getCachedItemByBarcode: vi.fn(),
   cacheCatalogItem: vi.fn().mockResolvedValue(undefined),
   getCachedItem: vi.fn(),
+  getSetParts: vi.fn(),
+  cacheSetParts: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../services/rebrickable', () => ({
   findRebrickableByBarcode: vi.fn(),
   searchRebrickable: vi.fn(),
   findRebrickableItem: vi.fn(),
+  fetchSetInventorySets: vi.fn(),
+  fetchPartsForInventory: vi.fn(),
 }));
 
 describe('Catalog Domain', () => {
@@ -302,5 +306,74 @@ describe('Catalog Domain', () => {
       (cacheCatalogItem as any).mockRejectedValueOnce(new Error('cache fail'));
       await expect(findByBarcode('9876543210987')).resolves.toBeDefined();
     });
+  });
+});
+
+const setItem: import('../types/lego').LegoCatalogItem = {
+  id: 'set-75313',
+  type: 'set',
+  number: '75313-1',
+  name: 'AT-AT',
+  theme: 'Star Wars',
+  year: 2021,
+  pieceCount: 6785,
+  retired: false,
+  estimatedValue: 849.99,
+  imageUrl: '',
+};
+
+const part1: import('../types/lego').SetPart = {
+  partNum: '3001', partName: 'Brick 2 x 4', colorName: 'Red',
+  quantity: 2, bagNum: 1, imgUrl: '', isSpare: false,
+};
+
+describe('getOrFetchSetParts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns cached parts from Supabase without calling Rebrickable', async () => {
+    (getSetParts as any).mockResolvedValueOnce([part1]);
+    const result = await getOrFetchSetParts(setItem);
+    expect(result).toEqual([part1]);
+    expect(fetchSetInventorySets).not.toHaveBeenCalled();
+    expect(fetchPartsForInventory).not.toHaveBeenCalled();
+  });
+
+  it('fetches from Rebrickable by bag when no cache, then caches result', async () => {
+    (getSetParts as any).mockResolvedValueOnce([]);
+    (fetchSetInventorySets as any).mockResolvedValueOnce(['75313-B1', '75313-B2']);
+    (fetchPartsForInventory as any)
+      .mockResolvedValueOnce([{ ...part1, bagNum: 1 }])
+      .mockResolvedValueOnce([{ ...part1, partNum: '3002', bagNum: 2 }]);
+    const result = await getOrFetchSetParts(setItem);
+    expect(result).toHaveLength(2);
+    expect(fetchPartsForInventory).toHaveBeenCalledWith('75313-B1', 1);
+    expect(fetchPartsForInventory).toHaveBeenCalledWith('75313-B2', 2);
+    expect(cacheSetParts).toHaveBeenCalledWith('set-75313', result);
+  });
+
+  it('fetches flat list when no bags exist, with bagNum null', async () => {
+    (getSetParts as any).mockResolvedValueOnce([]);
+    (fetchSetInventorySets as any).mockResolvedValueOnce([]);
+    (fetchPartsForInventory as any).mockResolvedValueOnce([{ ...part1, bagNum: null }]);
+    const result = await getOrFetchSetParts(setItem);
+    expect(fetchPartsForInventory).toHaveBeenCalledWith('75313-1', null);
+    expect(result[0].bagNum).toBeNull();
+  });
+
+  it('returns empty array for minifig items without calling any service', async () => {
+    const minifig = { ...setItem, id: 'fig-sw001', type: 'minifig' as const };
+    const result = await getOrFetchSetParts(minifig);
+    expect(result).toEqual([]);
+    expect(getSetParts).not.toHaveBeenCalled();
+    expect(fetchSetInventorySets).not.toHaveBeenCalled();
+  });
+
+  it('returns empty array when fetch fails', async () => {
+    (getSetParts as any).mockResolvedValueOnce([]);
+    (fetchSetInventorySets as any).mockRejectedValueOnce(new Error('Network error'));
+    const result = await getOrFetchSetParts(setItem);
+    expect(result).toEqual([]);
   });
 });

@@ -1,6 +1,6 @@
-import type { LegoCatalogItem, LegoItemType } from '../types/lego';
-import { searchRebrickable, findRebrickableItem, findRebrickableByBarcode } from '../services/rebrickable';
-import { getCachedItem, cacheCatalogItem, getCachedItemByBarcode } from '../services/supabase';
+import type { LegoCatalogItem, LegoItemType, SetPart } from '../types/lego';
+import { searchRebrickable, findRebrickableItem, findRebrickableByBarcode, fetchSetInventorySets, fetchPartsForInventory } from '../services/rebrickable';
+import { getCachedItem, cacheCatalogItem, getCachedItemByBarcode, getSetParts, cacheSetParts } from '../services/supabase';
 
 export const seedCatalog: LegoCatalogItem[] = [
   {
@@ -140,7 +140,7 @@ export async function findCatalogItem(id: string): Promise<LegoCatalogItem | und
 
 export async function findByBarcode(barcode: string): Promise<LegoCatalogItem | undefined> {
   const cleaned = barcode.trim();
-  
+
   // 1. Check seed catalog
   const local = seedCatalog.find((item) => item.barcode === cleaned);
   if (local) return local;
@@ -159,4 +159,30 @@ export async function findByBarcode(barcode: string): Promise<LegoCatalogItem | 
     return external;
   }
   return undefined;
+}
+
+export async function getOrFetchSetParts(item: LegoCatalogItem): Promise<SetPart[]> {
+  if (item.type !== 'set') return [];
+
+  try {
+    const cached = await getSetParts(item.id);
+    if (cached.length > 0) return cached;
+
+    const bagSetNums = await fetchSetInventorySets(item.number);
+    let parts: SetPart[];
+
+    if (bagSetNums.length > 0) {
+      const perBag = await Promise.all(
+        bagSetNums.map((bagSetNum, i) => fetchPartsForInventory(bagSetNum, i + 1))
+      );
+      parts = perBag.flat();
+    } else {
+      parts = await fetchPartsForInventory(item.number, null);
+    }
+
+    cacheSetParts(item.id, parts).catch(() => {});
+    return parts;
+  } catch {
+    return [];
+  }
 }
