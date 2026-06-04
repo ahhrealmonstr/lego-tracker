@@ -168,7 +168,10 @@ export async function getOrFetchSetParts(item: LegoCatalogItem): Promise<SetPart
     const cached = await getSetParts(item.id);
     if (cached.length > 0) return cached;
 
-    const bagSetNums = await fetchSetInventorySets(item.number);
+    // Rebrickable requires variant suffix (e.g. "10305-1"); seed catalog items omit it
+    const rebrickableNum = item.number.includes('-') ? item.number : `${item.number}-1`;
+
+    const bagSetNums = await fetchSetInventorySets(rebrickableNum);
     let parts: SetPart[];
 
     if (bagSetNums.length > 0) {
@@ -177,7 +180,7 @@ export async function getOrFetchSetParts(item: LegoCatalogItem): Promise<SetPart
       );
       parts = perBag.flat();
     } else {
-      parts = await fetchPartsForInventory(item.number, null);
+      parts = await fetchPartsForInventory(rebrickableNum, null);
     }
 
     cacheSetParts(item.id, parts).catch(() => {});
