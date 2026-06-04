@@ -32,6 +32,17 @@ describe('partsToCSV', () => {
     const lines = partsToCSV([part1, part2]).split('\n');
     expect(lines).toHaveLength(3); // header + 2 rows
   });
+
+  it('neutralizes formula injection by prefixing dangerous leading characters', () => {
+    const injectionPart: SetPart = { ...part1, partNum: '=DANGEROUS', colorName: '+malicious' };
+    const csv = partsToCSV([injectionPart]);
+    // Values must start with ' prefix, not bare = or +
+    expect(csv).toContain("'=DANGEROUS");
+    expect(csv).toContain("'+malicious");
+    // Must not appear as a bare unquoted formula start
+    expect(csv).not.toMatch(/^=DANGEROUS/m);
+    expect(csv).not.toMatch(/^[+]malicious/m);
+  });
 });
 
 describe('partsToBSX', () => {

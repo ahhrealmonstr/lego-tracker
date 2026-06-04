@@ -1,10 +1,12 @@
 import type { SetPart } from '../types/lego';
 
 function csvEscape(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
+  // Neutralize formula injection (Excel/Sheets treat leading =+-@ as formulas)
+  let v = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  if (v.includes(',') || v.includes('"') || v.includes('\n') || v.includes('\r')) {
+    return `"${v.replace(/"/g, '""')}"`;
   }
-  return value;
+  return v;
 }
 
 function xmlEscape(value: string): string {
@@ -18,7 +20,7 @@ function xmlEscape(value: string): string {
 export function partsToCSV(parts: SetPart[]): string {
   if (parts.length === 0) return '';
   const header = 'DesignNumber,ColorName,Quantity';
-  const rows = parts.map(p => `${p.partNum},${csvEscape(p.colorName)},${p.quantity}`);
+  const rows = parts.map(p => `${csvEscape(p.partNum)},${csvEscape(p.colorName)},${p.quantity}`);
   return [header, ...rows].join('\n');
 }
 
