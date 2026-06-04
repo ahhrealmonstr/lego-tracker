@@ -7,6 +7,7 @@ import {
   loadCollectionFromCloud,
   isSupabaseConfigured,
   getSetParts,
+  cacheSetParts,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -354,6 +355,49 @@ describe('Supabase Service', () => {
       makeMockClient({ data: [{ ...setPartRow, bag_num: null }], error: null });
       const parts = await getSetParts('set-75313');
       expect(parts[0].bagNum).toBeNull();
+    });
+  });
+
+  const samplePart: import('../types/lego').SetPart = {
+    partNum: '3001',
+    partName: 'Brick 2 x 4',
+    colorName: 'Red',
+    quantity: 2,
+    bagNum: 1,
+    imgUrl: 'https://cdn.rebrickable.com/3001.png',
+    isSpare: false,
+  };
+
+  describe('cacheSetParts', () => {
+    it('calls upsert with mapped rows', async () => {
+      const client = makeMockClient();
+      await cacheSetParts('set-75313', [samplePart]);
+      expect(client.upsert).toHaveBeenCalledWith(
+        [
+          {
+            set_id: 'set-75313',
+            part_num: '3001',
+            part_name: 'Brick 2 x 4',
+            color_name: 'Red',
+            quantity: 2,
+            bag_num: 1,
+            img_url: 'https://cdn.rebrickable.com/3001.png',
+            is_spare: false,
+          },
+        ],
+        { onConflict: 'set_id,part_num,color_name', ignoreDuplicates: true }
+      );
+    });
+
+    it('does nothing when parts array is empty', async () => {
+      const client = makeMockClient();
+      await cacheSetParts('set-75313', []);
+      expect(client.upsert).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when Supabase is not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      await expect(cacheSetParts('set-75313', [samplePart])).resolves.toBeUndefined();
     });
   });
 });
