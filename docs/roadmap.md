@@ -54,18 +54,18 @@ status: in-progress
 
 ## UI Polish
 
-- **Summary**: Refine the web app visual design — reduce visual weight, improve spacing and typography rhythm, add subtle depth, and ensure the dark mode palette feels intentional rather than just inverted.
-- **Status**: backlog
+- **Summary**: Warm palette, dark mode via CSS custom properties, parts grid layout, mobile panel switching with back navigation.
+- **Status**: done
 - **Milestone**: M4
 - **Tasks**:
-  - [ ] Audit spacing — tighten sidebar padding, reduce card border-radius uniformity, add consistent vertical rhythm
-  - [ ] Typography — introduce size/weight hierarchy for set names vs metadata vs labels
-  - [ ] Stat cards — replace flat bordered boxes with subtle shadow or background gradient
-  - [ ] Item list — add hover transition depth (shadow lift instead of just bg change)
-  - [ ] Detail panel — improve image presentation (soft shadow, better aspect-ratio handling)
-  - [ ] Badge/pill styling — refine price and status pill visual weight
-  - [ ] Dark mode fine-tuning — verify contrast ratios, adjust muted text tones, check form inputs
-  - [ ] Responsive polish — sidebar collapse behaviour on tablet, better mobile detail panel
+  - [x] Audit spacing — tighten sidebar padding, reduce card border-radius uniformity, add consistent vertical rhythm
+  - [x] Typography — size/weight hierarchy for set names vs metadata vs labels
+  - [x] Stat cards — subtle shadow + surface-alt background
+  - [x] Item list — shadow lift on hover + translateY transition
+  - [x] Detail panel — large image with shadow-lg, padding, soft background
+  - [x] Badge/pill styling — gold-tinted price pill, neutral status pill
+  - [x] Dark mode fine-tuning — CSS custom properties, verified contrast, warm palette
+  - [x] Responsive polish — mobile panel switching (list ↔ detail) with ← Back nav
 
 ## Pick-a-Brick Parts List Export
 
