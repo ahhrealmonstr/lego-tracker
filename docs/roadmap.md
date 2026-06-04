@@ -1,7 +1,7 @@
 ---
 project: lego-tracker
 version: 1.0.0
-last_synced: 2026-06-04
+last_synced: 2026-06-04 (M5 done)
 last_manual_edit: 2026-05-18
 status: in-progress
 ---
@@ -69,15 +69,15 @@ status: in-progress
 
 ## Pick-a-Brick Parts List Export
 
-- **Summary**: Generate and export Lego Pick-a-Brick–compatible parts lists from any set info page, with optional per-bag breakdowns.
-- **Status**: in-progress
+- **Summary**: Per-set parts list view with CSV and BSX export. Parts fetched from Rebrickable on first view, cached in Supabase. Full-set and per-bag export supported.
+- **Status**: done
 - **Milestone**: M5
 - **Tasks**:
   - [x] Parse and store per-bag part assignments alongside set part data (Rebrickable bag field) — `set_parts` table + `cacheSetParts`
   - [x] Build parts-list view on set info page showing part image, number, color, quantity, grouped by bag — `PartsList` component
-  - [ ] Export full set parts list as Pick-a-Brick–compatible CSV (element ID, color, quantity columns)
-  - [ ] Add per-bag export filter so users can download a list for a single bag
-  - [ ] Support XML/BrickLink BSX export format as a secondary option
+  - [x] Export full set parts list as Pick-a-Brick–compatible CSV (DesignNumber, ColorName, Quantity)
+  - [x] Add per-bag export filter — CSV and BSX buttons on each bag row
+  - [x] Support XML/BrickLink BSX export format (`partsToBSX` with `<ColorName>` fallback)
 
 ## In-App Building Instructions
 
