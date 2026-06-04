@@ -342,5 +342,19 @@ describe('Rebrickable Service', () => {
       const parts = await fetchPartsForInventory('75313-1', null);
       expect(parts).toHaveLength(1);
     });
+
+    it('propagates RateLimitError', async () => {
+      mockFetch.mockResolvedValueOnce({
+        status: 429, ok: false,
+        headers: { get: (k: string) => k === 'Retry-After' ? '45' : null },
+      });
+      await expect(fetchPartsForInventory('75313-1', 1))
+        .rejects.toMatchObject({ retryAfter: 45 });
+    });
+
+    it('returns empty array on network failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+      expect(await fetchPartsForInventory('75313-1', null)).toEqual([]);
+    });
   });
 });
