@@ -116,6 +116,18 @@ export async function findRebrickableByBarcode(barcode: string): Promise<LegoCat
   return null;
 }
 
+interface RebrickableInventorySetsResponse {
+  results: Array<{ set_num: string; name: string }>;
+}
+
+export async function fetchSetInventorySets(setNum: string): Promise<string[]> {
+  const result = await fetchFromRebrickable<RebrickableInventorySetsResponse>(
+    `/sets/${setNum}/sets/`,
+    {}
+  );
+  return result?.results.map(s => s.set_num) ?? [];
+}
+
 export async function findRebrickableItem(number: string, type: LegoItemType): Promise<LegoCatalogItem | null> {
   const endpoint = type === 'set' ? `/sets/${number}/` : `/minifigs/${number}/`;
   

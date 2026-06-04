@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { searchRebrickable, findRebrickableByBarcode, findRebrickableItem } from './rebrickable';
+import { searchRebrickable, findRebrickableByBarcode, findRebrickableItem, fetchSetInventorySets } from './rebrickable';
 import { getConfig } from '../config';
 
 vi.mock('../config', () => ({
@@ -157,6 +157,46 @@ describe('Rebrickable Service', () => {
       });
       await expect(findRebrickableItem('75312-1', 'set'))
         .rejects.toMatchObject({ retryAfter: 60 });
+    });
+  });
+
+  describe('fetchSetInventorySets', () => {
+    it('returns bag set numbers when inventory sets exist', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          count: 2,
+          next: null,
+          results: [
+            { set_num: '75313-B1', name: 'Bag 1', num_parts: 200, set_img_url: '' },
+            { set_num: '75313-B2', name: 'Bag 2', num_parts: 150, set_img_url: '' },
+          ],
+        }),
+      });
+      const bags = await fetchSetInventorySets('75313-1');
+      expect(bags).toEqual(['75313-B1', '75313-B2']);
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/sets/75313-1/sets/'));
+    });
+
+    it('returns empty array when no inventory sets exist', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ count: 0, next: null, results: [] }),
+      });
+      expect(await fetchSetInventorySets('10305-1')).toEqual([]);
+    });
+
+    it('returns empty array when API key is missing', async () => {
+      (getConfig as any).mockReturnValue({ rebrickableApiKey: null });
+      expect(await fetchSetInventorySets('75313-1')).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('returns empty array on non-ok response', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+      expect(await fetchSetInventorySets('75313-1')).toEqual([]);
     });
   });
 });
