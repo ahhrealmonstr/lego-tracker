@@ -1,7 +1,7 @@
 ---
 project: lego-tracker
 version: 1.0.0
-last_synced: 2026-05-18
+last_synced: 2026-06-04
 last_manual_edit: 2026-05-18
 status: in-progress
 ---
@@ -33,13 +33,14 @@ status: in-progress
 
 ## Catalog Expansion
 
-- **Summary**: Integrated Rebrickable API and Supabase-backed catalog caching. Barcode lookup now chains seed catalog → Supabase cache → Rebrickable with auto-caching and full UI feedback.
+- **Summary**: Integrated Rebrickable API and Supabase-backed catalog caching. Barcode lookup now chains seed catalog → Supabase cache → Rebrickable with auto-caching and full UI feedback. Bulk CSV seed pipeline seeds 27k sets with resolved theme names on demand.
 - **Status**: done
 - **Milestone**: M2
 - **Tasks**:
   - [x] Integrate external catalog API (e.g., Rebrickable)
   - [x] Implement catalog caching/mirroring in Supabase
   - [x] Enhance barcode lookup with real-world catalog matching
+  - [x] Bulk CSV import pipeline — seed catalog_cache from Rebrickable sets.csv + themes.csv (`npm run seed-catalog`)
 
 ## Data Portability & Sync
 
@@ -69,11 +70,11 @@ status: in-progress
 ## Pick-a-Brick Parts List Export
 
 - **Summary**: Generate and export Lego Pick-a-Brick–compatible parts lists from any set info page, with optional per-bag breakdowns.
-- **Status**: backlog
+- **Status**: in-progress
 - **Milestone**: M5
 - **Tasks**:
-  - [ ] Parse and store per-bag part assignments alongside set part data (Rebrickable bag field)
-  - [ ] Build parts-list view on set info page showing element ID, color, quantity, and bag number
+  - [x] Parse and store per-bag part assignments alongside set part data (Rebrickable bag field) — `set_parts` table + `cacheSetParts`
+  - [x] Build parts-list view on set info page showing part image, number, color, quantity, grouped by bag — `PartsList` component
   - [ ] Export full set parts list as Pick-a-Brick–compatible CSV (element ID, color, quantity columns)
   - [ ] Add per-bag export filter so users can download a list for a single bag
   - [ ] Support XML/BrickLink BSX export format as a secondary option
