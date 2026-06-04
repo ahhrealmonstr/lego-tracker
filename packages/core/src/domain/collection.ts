@@ -1,4 +1,4 @@
-import type { AcquisitionQuality, CollectionStatus, CollectionSummary, LegoCatalogItem, OwnedLegoItem } from '../types/lego';
+import type { AcquisitionQuality, CollectionStatus, CollectionSummary, LegoCatalogItem, MissingSetPart, OwnedLegoItem, SetPart } from '../types/lego';
 
 export function createOwnedItem(item: LegoCatalogItem, status: CollectionStatus): OwnedLegoItem {
   const now = new Date().toISOString();
@@ -12,6 +12,7 @@ export function createOwnedItem(item: LegoCatalogItem, status: CollectionStatus)
     displayLocation: '',
     notes: '',
     missingParts: '',
+    missingPartsList: [],
     quantity: 1,
     addedAt: now,
     updatedAt: now,
@@ -27,6 +28,22 @@ export function summarizeCollection(items: OwnedLegoItem[]): CollectionSummary {
       .reduce((total, item) => total + item.estimatedValue * item.quantity, 0),
     completeBuilds: items.filter((item) => item.buildStatus === 'complete').length,
   };
+}
+
+export function toggleMissingPart(item: OwnedLegoItem, part: SetPart): OwnedLegoItem {
+  const key = `${part.partNum}:${part.colorName}`;
+  const existing = item.missingPartsList ?? [];
+  const alreadyMissing = existing.some(p => `${p.partNum}:${p.colorName}` === key);
+  const missingPartsList: MissingSetPart[] = alreadyMissing
+    ? existing.filter(p => `${p.partNum}:${p.colorName}` !== key)
+    : [...existing, {
+        partNum: part.partNum,
+        partName: part.partName,
+        colorName: part.colorName,
+        quantity: part.quantity,
+        imgUrl: part.imgUrl,
+      }];
+  return { ...item, missingPartsList };
 }
 
 export function upsertOwnedItem(items: OwnedLegoItem[], nextItem: OwnedLegoItem): OwnedLegoItem[] {

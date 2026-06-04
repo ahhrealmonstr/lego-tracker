@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { createOwnedItem, summarizeCollection, upsertOwnedItem } from './collection';
-import type { LegoCatalogItem, OwnedLegoItem } from '../types/lego';
+import { createOwnedItem, summarizeCollection, upsertOwnedItem, toggleMissingPart } from './collection';
+import type { LegoCatalogItem, OwnedLegoItem, SetPart } from '../types/lego';
 
 const baseCatalogItem: LegoCatalogItem = {
   id: 'set-10305', type: 'set', number: '10305',
@@ -18,7 +18,7 @@ function makeOwned(
 ): OwnedLegoItem {
   return {
     ...baseCatalogItem, status, acquiredQuality: 'new', savedBox: true,
-    buildStatus, displayLocation: '', notes: '', missingParts: '',
+    buildStatus, displayLocation: '', notes: '', missingParts: '', missingPartsList: [],
     quantity, estimatedValue,
     addedAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
@@ -106,6 +106,44 @@ describe('collection domain', () => {
       const before = existingItem.updatedAt;
       const result = upsertOwnedItem([existingItem], { ...existingItem, notes: 'x' });
       expect(result[0].updatedAt).not.toBe(before);
+    });
+  });
+
+  describe('toggleMissingPart', () => {
+    const basePart: SetPart = {
+      partNum: '3001', partName: 'Brick 2x4', colorName: 'Red',
+      quantity: 2, bagNum: null, imgUrl: 'https://img.example.com/3001.png', isSpare: false,
+    };
+
+    it('adds a part when not already missing', () => {
+      const item = makeOwned('collection');
+      const result = toggleMissingPart(item, basePart);
+      expect(result.missingPartsList).toHaveLength(1);
+      expect(result.missingPartsList[0].partNum).toBe('3001');
+      expect(result.missingPartsList[0].quantity).toBe(2);
+    });
+
+    it('removes a part when already missing', () => {
+      const item: OwnedLegoItem = {
+        ...makeOwned('collection'),
+        missingPartsList: [
+          { partNum: '3001', partName: 'Brick 2x4', colorName: 'Red', quantity: 2, imgUrl: '' },
+        ],
+      };
+      const result = toggleMissingPart(item, basePart);
+      expect(result.missingPartsList).toHaveLength(0);
+    });
+
+    it('does not mutate the original item', () => {
+      const item = makeOwned('collection');
+      toggleMissingPart(item, basePart);
+      expect(item.missingPartsList).toHaveLength(0);
+    });
+
+    it('handles undefined missingPartsList gracefully', () => {
+      const item = { ...makeOwned('collection'), missingPartsList: undefined as any };
+      const result = toggleMissingPart(item, basePart);
+      expect(result.missingPartsList).toHaveLength(1);
     });
   });
 });

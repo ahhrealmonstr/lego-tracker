@@ -34,6 +34,7 @@ export interface OwnedLegoItem extends LegoCatalogItem {
   displayLocation: string;
   notes: string;
   missingParts: string;
+  missingPartsList: MissingSetPart[];
   quantity: number;
   addedAt: string;
   updatedAt: string;
@@ -51,6 +52,14 @@ export type SyncStatus = 'idle' | 'syncing' | 'error' | 'offline';
 export type SyncQueueEntry =
   | { type: 'upsert'; item: OwnedLegoItem }
   | { type: 'delete'; itemId: string; deletedAt: string };
+
+export interface MissingSetPart {
+  partNum: string;
+  partName: string;
+  colorName: string;
+  quantity: number;
+  imgUrl: string;
+}
 
 export interface InstructionBooklet {
   title: string;
