@@ -1,4 +1,4 @@
-import type { LegoCatalogItem, LegoItemType } from '../types/lego';
+import type { LegoCatalogItem, LegoItemType, SetPart } from '../types/lego';
 import { getConfig } from '../config';
 
 const BASE_URL = 'https://rebrickable.com/api/v3/lego';
@@ -130,7 +130,7 @@ export async function fetchSetInventorySets(setNum: string): Promise<string[]> {
 
 export async function findRebrickableItem(number: string, type: LegoItemType): Promise<LegoCatalogItem | null> {
   const endpoint = type === 'set' ? `/sets/${number}/` : `/minifigs/${number}/`;
-  
+
   try {
     const item = await fetchFromRebrickable<RebrickableItem>(endpoint, {});
     return item ? mapToCatalogItem(item, type) : null;
@@ -138,4 +138,55 @@ export async function findRebrickableItem(number: string, type: LegoItemType): P
     if (error instanceof RateLimitError) throw error;
     return null;
   }
+}
+
+interface RebrickablePartEntry {
+  part: { part_num: string; name: string; part_img_url: string };
+  color: { name: string };
+  quantity: number;
+  is_spare: boolean;
+}
+
+interface RebrickablePartsPage {
+  count: number;
+  next: string | null;
+  results: RebrickablePartEntry[];
+}
+
+export async function fetchPartsForInventory(setNum: string, bagNum: number | null): Promise<SetPart[]> {
+  const { rebrickableApiKey } = getConfig();
+  if (!rebrickableApiKey) return [];
+
+  const parts: SetPart[] = [];
+  let url: string | null =
+    `${BASE_URL}/sets/${setNum}/parts/?${new URLSearchParams({ key: rebrickableApiKey, page_size: '100' }).toString()}`;
+
+  while (url) {
+    try {
+      const response = await fetch(url);
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        throw new RateLimitError('Rate limit exceeded', retryAfter ? parseInt(retryAfter, 10) : undefined);
+      }
+      if (!response.ok) break;
+      const page: RebrickablePartsPage = await response.json();
+      for (const entry of page.results) {
+        parts.push({
+          partNum: entry.part.part_num,
+          partName: entry.part.name,
+          colorName: entry.color.name,
+          quantity: entry.quantity,
+          bagNum,
+          imgUrl: entry.part.part_img_url ?? '',
+          isSpare: entry.is_spare,
+        });
+      }
+      url = page.next;
+    } catch (error) {
+      if (error instanceof RateLimitError) throw error;
+      break;
+    }
+  }
+
+  return parts;
 }

@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { searchRebrickable, findRebrickableByBarcode, findRebrickableItem, fetchSetInventorySets } from './rebrickable';
+import {
+  searchRebrickable,
+  findRebrickableByBarcode,
+  findRebrickableItem,
+  fetchSetInventorySets,
+  fetchPartsForInventory,
+} from './rebrickable';
 import { getConfig } from '../config';
 
 vi.mock('../config', () => ({
@@ -206,6 +212,135 @@ describe('Rebrickable Service', () => {
       });
       await expect(fetchSetInventorySets('75313-1'))
         .rejects.toMatchObject({ retryAfter: 45 });
+    });
+  });
+
+  describe('fetchPartsForInventory', () => {
+    it('maps API results to SetPart with given bagNum', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({
+          count: 1,
+          next: null,
+          results: [
+            {
+              part: { part_num: '3001', name: 'Brick 2 x 4', part_img_url: 'https://cdn.rebrickable.com/3001.png' },
+              color: { name: 'Red' },
+              quantity: 2,
+              is_spare: false,
+            },
+          ],
+        }),
+      });
+      const parts = await fetchPartsForInventory('75313-B1', 1);
+      expect(parts).toHaveLength(1);
+      expect(parts[0]).toEqual({
+        partNum: '3001',
+        partName: 'Brick 2 x 4',
+        colorName: 'Red',
+        quantity: 2,
+        bagNum: 1,
+        imgUrl: 'https://cdn.rebrickable.com/3001.png',
+        isSpare: false,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/sets/75313-B1/parts/'));
+    });
+
+    it('uses null bagNum when passed null', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({
+          count: 1,
+          next: null,
+          results: [
+            {
+              part: { part_num: '3001', name: 'Brick 2 x 4', part_img_url: '' },
+              color: { name: 'Red' },
+              quantity: 1,
+              is_spare: true,
+            },
+          ],
+        }),
+      });
+      const parts = await fetchPartsForInventory('10305-1', null);
+      expect(parts[0].bagNum).toBeNull();
+      expect(parts[0].isSpare).toBe(true);
+    });
+
+    it('follows pagination and concatenates results', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({
+            count: 2,
+            next: 'https://rebrickable.com/api/v3/lego/sets/75313-1/parts/?key=test-api-key&page=2',
+            results: [
+              {
+                part: { part_num: '3001', name: 'Brick 2 x 4', part_img_url: '' },
+                color: { name: 'Red' },
+                quantity: 1,
+                is_spare: false,
+              },
+            ],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({
+            count: 2,
+            next: null,
+            results: [
+              {
+                part: { part_num: '3002', name: 'Brick 1 x 4', part_img_url: '' },
+                color: { name: 'Blue' },
+                quantity: 3,
+                is_spare: false,
+              },
+            ],
+          }),
+        });
+      const parts = await fetchPartsForInventory('75313-1', null);
+      expect(parts).toHaveLength(2);
+      expect(parts[1].partNum).toBe('3002');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns empty array when API key is missing', async () => {
+      (getConfig as any).mockReturnValue({ rebrickableApiKey: null });
+      expect(await fetchPartsForInventory('75313-1', 1)).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('returns partial results and stops on non-ok response mid-page', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({
+            count: 2,
+            next: 'https://rebrickable.com/api/v3/lego/sets/75313-1/parts/?page=2',
+            results: [
+              {
+                part: { part_num: '3001', name: 'Brick 2 x 4', part_img_url: '' },
+                color: { name: 'Red' },
+                quantity: 1,
+                is_spare: false,
+              },
+            ],
+          }),
+        })
+        .mockResolvedValueOnce({ ok: false, status: 500, headers: { get: () => null } });
+      const parts = await fetchPartsForInventory('75313-1', null);
+      expect(parts).toHaveLength(1);
     });
   });
 });
