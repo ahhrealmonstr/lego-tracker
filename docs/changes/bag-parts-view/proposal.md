@@ -176,7 +176,7 @@ Add at the bottom of the panel, outside the owned-item form, visible regardless 
 ## Error Handling
 
 | Scenario | Behaviour |
-|---|---|
+| --- | --- |
 | No Rebrickable API key | `getOrFetchSetParts` returns `[]`; `PartsList` renders nothing |
 | Set has no parts on Rebrickable | Returns `[]`; `PartsList` renders nothing |
 | Network error mid-fetch | Partial results discarded; `useSetParts` sets `error: true`; inline "Couldn't load parts" shown |
