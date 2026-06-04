@@ -9,11 +9,16 @@
     "web:dev": "npm run dev -w apps/web",
     "web:build": "npm run build -w apps/web",
     "lint:md": "markdownlint \"*.md\" \"docs/**/*.md\"",
-    "supabase:init": "supabase init"
+    "supabase:init": "supabase init",
+    "seed-catalog": "tsx scripts/seed-catalog.ts"
   },
   "devDependencies": {
     "@postgres-language-server/cli": "^0.24.0",
+    "csv-parse": "^5.6.0",
+    "dotenv": "^16.4.0",
     "markdownlint-cli": "^0.48.0",
-    "supabase": "^2.95.6"
+    "supabase": "^2.95.6",
+    "tsx": "^4.19.0",
+    "vitest": "^3.0.0"
   }
 }
