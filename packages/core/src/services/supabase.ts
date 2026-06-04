@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { LegoCatalogItem, LegoItemType, OwnedLegoItem, SyncQueueEntry } from '../types/lego';
+import type { LegoCatalogItem, LegoItemType, OwnedLegoItem, SyncQueueEntry, SetPart } from '../types/lego';
 import { getConfig } from '../config';
 
 function getClient() {
@@ -195,4 +195,53 @@ export async function syncCollectionToCloud(queue: SyncQueueEntry[]): Promise<vo
 
 export function isSupabaseConfigured(): boolean {
   return getClient() !== null;
+}
+
+/**
+ * Set Parts Services
+ */
+
+function mapSetPartFromDb(row: Record<string, unknown>): SetPart {
+  return {
+    partNum: row.part_num as string,
+    partName: row.part_name as string,
+    colorName: row.color_name as string,
+    quantity: row.quantity as number,
+    bagNum: row.bag_num as number | null,
+    imgUrl: row.img_url as string,
+    isSpare: row.is_spare as boolean,
+  };
+}
+
+export async function getSetParts(setId: string): Promise<SetPart[]> {
+  const supabase = getClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('set_parts')
+    .select('*')
+    .eq('set_id', setId);
+
+  if (error || !data) return [];
+  return data.map(mapSetPartFromDb);
+}
+
+export async function cacheSetParts(setId: string, parts: SetPart[]): Promise<void> {
+  const supabase = getClient();
+  if (!supabase || parts.length === 0) return;
+
+  const rows = parts.map(p => ({
+    set_id: setId,
+    part_num: p.partNum,
+    part_name: p.partName,
+    color_name: p.colorName,
+    quantity: p.quantity,
+    bag_num: p.bagNum,
+    img_url: p.imgUrl,
+    is_spare: p.isSpare,
+  }));
+
+  await supabase
+    .from('set_parts')
+    .upsert(rows, { onConflict: 'set_id,part_num,color_name', ignoreDuplicates: true });
 }

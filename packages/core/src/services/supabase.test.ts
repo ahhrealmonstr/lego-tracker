@@ -6,6 +6,7 @@ import {
   syncCollectionToCloud,
   loadCollectionFromCloud,
   isSupabaseConfigured,
+  getSetParts,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -308,6 +309,51 @@ describe('Supabase Service', () => {
         supabaseUrl: 'https://x.supabase.co', supabaseAnonKey: null,
       });
       expect(isSupabaseConfigured()).toBe(false);
+    });
+  });
+
+  const setPartRow = {
+    id: 'uuid-1',
+    set_id: 'set-75313',
+    part_num: '3001',
+    part_name: 'Brick 2 x 4',
+    color_name: 'Red',
+    quantity: 2,
+    bag_num: 1,
+    img_url: 'https://cdn.rebrickable.com/3001.png',
+    is_spare: false,
+  };
+
+  describe('getSetParts', () => {
+    it('returns mapped SetPart array from DB rows', async () => {
+      makeMockClient({ data: [setPartRow], error: null });
+      const parts = await getSetParts('set-75313');
+      expect(parts).toHaveLength(1);
+      expect(parts[0]).toEqual({
+        partNum: '3001',
+        partName: 'Brick 2 x 4',
+        colorName: 'Red',
+        quantity: 2,
+        bagNum: 1,
+        imgUrl: 'https://cdn.rebrickable.com/3001.png',
+        isSpare: false,
+      });
+    });
+
+    it('returns empty array on DB error', async () => {
+      makeMockClient({ data: null, error: { message: 'DB error' } });
+      expect(await getSetParts('set-75313')).toEqual([]);
+    });
+
+    it('returns empty array when Supabase is not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      expect(await getSetParts('set-75313')).toEqual([]);
+    });
+
+    it('maps null bag_num to null bagNum', async () => {
+      makeMockClient({ data: [{ ...setPartRow, bag_num: null }], error: null });
+      const parts = await getSetParts('set-75313');
+      expect(parts[0].bagNum).toBeNull();
     });
   });
 });
