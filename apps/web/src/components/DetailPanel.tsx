@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, BookOpen, Download, Heart, MapPin, Plus } from 'lucide-react';
 import { PartsList } from './PartsList';
+import { MissingPartsList } from './MissingPartsList';
 import { useInstructions } from '../hooks/useInstructions';
 import {
   AcquisitionQuality,
@@ -8,7 +9,9 @@ import {
   CollectionStatus,
   InstructionBooklet,
   LegoCatalogItem,
+  MissingSetPart,
   OwnedLegoItem,
+  SetPart,
   buildStatusLabels,
   itemTypeLabels,
   qualityLabels,
@@ -26,6 +29,7 @@ export function DetailPanel({
   onUpdate,
   onRemove,
   onBack,
+  onToggleMissing,
 }: {
   item?: LegoCatalogItem;
   ownedItem?: OwnedLegoItem;
@@ -33,6 +37,7 @@ export function DetailPanel({
   onUpdate: (patch: Partial<OwnedLegoItem>) => void;
   onRemove: () => void;
   onBack?: () => void;
+  onToggleMissing: (part: SetPart) => void;
 }) {
   if (!item) {
     return <section className="detail-panel empty-state">Select a set or minifig.</section>;
@@ -151,7 +156,22 @@ export function DetailPanel({
         </div>
       )}
 
-      {item.type === 'set' && <PartsList item={item} />}
+      {item.type === 'set' && (
+        <PartsList
+          item={item}
+          missingKeys={ownedItem ? new Set((ownedItem.missingPartsList ?? []).map(p => `${p.partNum}:${p.colorName}`)) : undefined}
+          onToggleMissing={ownedItem ? onToggleMissing : undefined}
+        />
+      )}
+      {item.type === 'set' && ownedItem && (
+        <MissingPartsList
+          parts={ownedItem.missingPartsList ?? []}
+          setNumber={item.number}
+          onRemove={(partNum, colorName) =>
+            onToggleMissing({ partNum, colorName, partName: '', quantity: 1, bagNum: null, imgUrl: '', isSpare: false })
+          }
+        />
+      )}
       {item.type === 'set' && <InstructionsSection item={item} />}
     </section>
   );

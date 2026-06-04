@@ -49,6 +49,7 @@ function mapRowToOwnedItem(row: any): OwnedLegoItem {
     displayLocation: row.display_location ?? '',
     notes: row.notes ?? '',
     missingParts: row.missing_parts ?? '',
+    missingPartsList: row.missing_parts_list ?? [],
     quantity: row.quantity,
     addedAt: row.added_at,
     updatedAt: row.updated_at,

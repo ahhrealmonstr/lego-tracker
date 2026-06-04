@@ -847,6 +847,86 @@ h1 {
 .booklet-title { flex: 1; font-size: 13px; font-weight: 600; }
 .booklet-download { color: var(--color-text-subtle); flex-shrink: 0; }
 
+/* ─── Missing parts ───────────────────────────────────── */
+
+.missing-parts-section {
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 32px;
+  padding-top: 24px;
+}
+
+.missing-parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.missing-part-row {
+  align-items: center;
+  background: rgba(201, 47, 47, 0.05);
+  border: 1px solid rgba(201, 47, 47, 0.15);
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+}
+
+.missing-part-img {
+  border-radius: 4px;
+  flex-shrink: 0;
+  height: 36px;
+  object-fit: contain;
+  width: 36px;
+}
+
+.missing-part-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.missing-remove-btn {
+  color: var(--color-text-subtle);
+  flex-shrink: 0;
+}
+
+.missing-remove-btn:hover { color: var(--color-accent); }
+
+/* Mark-missing toggle on part cards */
+.part-card--missing {
+  border-color: rgba(201, 47, 47, 0.4);
+  opacity: 0.7;
+}
+
+.part-missing-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  min-height: auto;
+  padding: 2px 4px;
+  width: 100%;
+}
+
+.part-missing-btn:hover {
+  background: transparent;
+  border-color: var(--color-accent);
+  box-shadow: none;
+  color: var(--color-accent);
+  transform: none;
+}
+
+.part-missing-btn--active {
+  background: rgba(201, 47, 47, 0.1);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 /* ─── Back button (mobile only) ───────────────────────── */
 
 .back-button {

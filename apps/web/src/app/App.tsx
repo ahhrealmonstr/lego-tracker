@@ -14,6 +14,7 @@ import {
   CollectionStatus,
   LegoCatalogItem,
   OwnedLegoItem,
+  SetPart,
   collectionToCSV,
   collectionToJSON,
   createOwnedItem,
@@ -23,6 +24,7 @@ import {
   seedCatalog,
   setConfig,
   summarizeCollection,
+  toggleMissingPart,
   upsertOwnedItem,
 } from '@lego-tracker/core';
 import { loadCollection, saveCollection } from '../services/storage';
@@ -131,6 +133,12 @@ export function App() {
     }
   }
 
+  function handleToggleMissing(part: SetPart) {
+    if (!selectedOwnedItem) return;
+    const updated = toggleMissingPart(selectedOwnedItem, part);
+    updateSelectedItem({ missingPartsList: updated.missingPartsList });
+  }
+
   return (
     <main className="app-shell" data-detail={detailVisible ? 'open' : 'closed'}>
       <section className="sidebar">
@@ -197,6 +205,7 @@ export function App() {
         onUpdate={updateSelectedItem}
         onRemove={removeSelectedItem}
         onBack={() => setDetailVisible(false)}
+        onToggleMissing={handleToggleMissing}
       />
 
       {scannerOpen ? (

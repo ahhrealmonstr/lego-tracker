@@ -2,7 +2,15 @@ import React from 'react';
 import { type LegoCatalogItem, type SetPart, partsToCSV, partsToBSX, downloadBlob } from '@lego-tracker/core';
 import { useSetParts } from '../hooks/useSetParts';
 
-export function PartsList({ item }: { item: LegoCatalogItem }) {
+export function PartsList({
+  item,
+  missingKeys,
+  onToggleMissing,
+}: {
+  item: LegoCatalogItem;
+  missingKeys?: Set<string>;
+  onToggleMissing?: (part: SetPart) => void;
+}) {
   const { parts, loading, error } = useSetParts(item);
 
   if (loading) {
@@ -76,7 +84,12 @@ export function PartsList({ item }: { item: LegoCatalogItem }) {
               </summary>
               <div className="parts-grid">
                 {bagParts.map(p => (
-                  <PartCard key={`${p.partNum}-${p.colorName}`} part={p} />
+                  <PartCard
+                    key={`${p.partNum}-${p.colorName}`}
+                    part={p}
+                    isMissing={missingKeys?.has(`${p.partNum}:${p.colorName}`) ?? false}
+                    onToggle={onToggleMissing}
+                  />
                 ))}
               </div>
             </details>
@@ -86,7 +99,12 @@ export function PartsList({ item }: { item: LegoCatalogItem }) {
           <p className="parts-count">{nonSpares.length} parts</p>
           <div className="parts-grid">
             {nonSpares.map(p => (
-              <PartCard key={`${p.partNum}-${p.colorName}`} part={p} />
+              <PartCard
+                key={`${p.partNum}-${p.colorName}`}
+                part={p}
+                isMissing={missingKeys?.has(`${p.partNum}:${p.colorName}`) ?? false}
+                onToggle={onToggleMissing}
+              />
             ))}
           </div>
         </>
@@ -96,7 +114,12 @@ export function PartsList({ item }: { item: LegoCatalogItem }) {
           <summary>Spare parts <span className="parts-count">({spares.length})</span></summary>
           <div className="parts-grid">
             {spares.map(p => (
-              <PartCard key={`${p.partNum}-${p.colorName}`} part={p} />
+              <PartCard
+                key={`${p.partNum}-${p.colorName}`}
+                part={p}
+                isMissing={missingKeys?.has(`${p.partNum}:${p.colorName}`) ?? false}
+                onToggle={onToggleMissing}
+              />
             ))}
           </div>
         </details>
@@ -105,9 +128,20 @@ export function PartsList({ item }: { item: LegoCatalogItem }) {
   );
 }
 
-function PartCard({ part }: { part: SetPart }) {
+function PartCard({
+  part,
+  isMissing,
+  onToggle,
+}: {
+  part: SetPart;
+  isMissing?: boolean;
+  onToggle?: (part: SetPart) => void;
+}) {
   return (
-    <div className="part-card" data-testid="part-card">
+    <div
+      className={`part-card${isMissing ? ' part-card--missing' : ''}`}
+      data-testid="part-card"
+    >
       <img
         src={part.imgUrl}
         alt={part.partName}
@@ -117,6 +151,17 @@ function PartCard({ part }: { part: SetPart }) {
       <span className="part-num">{part.partNum}</span>
       <span className="part-color">{part.colorName}</span>
       <span className="part-qty">×{part.quantity}</span>
+      {onToggle && (
+        <button
+          type="button"
+          className={`part-missing-btn${isMissing ? ' part-missing-btn--active' : ''}`}
+          title={isMissing ? 'Remove from missing' : 'Mark as missing'}
+          onClick={() => onToggle(part)}
+          data-testid={`part-missing-${part.partNum}`}
+        >
+          {isMissing ? '✓' : '!'}
+        </button>
+      )}
     </div>
   );
 }

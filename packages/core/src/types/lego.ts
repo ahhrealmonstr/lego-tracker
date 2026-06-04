@@ -34,7 +34,7 @@ export interface OwnedLegoItem extends LegoCatalogItem {
   displayLocation: string;
   notes: string;
   missingParts: string;
-  missingPartsList: MissingSetPart[];
+  missingPartsList?: MissingSetPart[];
   quantity: number;
   addedAt: string;
   updatedAt: string;
