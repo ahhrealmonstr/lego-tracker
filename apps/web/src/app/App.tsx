@@ -52,6 +52,7 @@ export function App() {
   const [items, setItems] = useState<OwnedLegoItem[]>(() => loadCollection());
   const [activeView, setActiveView] = useState<ViewMode>('catalog');
   const [selectedItemId, setSelectedItemId] = useState<string>(seedCatalog[0]?.id ?? '');
+  const [detailVisible, setDetailVisible] = useState(false);
   const [catalogResults, setCatalogResults] = useState<LegoCatalogItem[]>(seedCatalog);
   const [isSearching, setIsSearching] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -131,7 +132,7 @@ export function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-detail={detailVisible ? 'open' : 'closed'}>
       <section className="sidebar">
         <div className="brand-row">
           <div className="brand-mark">
@@ -184,7 +185,7 @@ export function App() {
           catalogItems={catalogResults}
           ownedItems={visibleOwnedItems}
           selectedItemId={selectedItem?.id}
-          onSelect={setSelectedItemId}
+          onSelect={(id) => { setSelectedItemId(id); setDetailVisible(true); }}
           onAdd={addItem}
         />
       </section>
@@ -195,6 +196,7 @@ export function App() {
         onAdd={addItem}
         onUpdate={updateSelectedItem}
         onRemove={removeSelectedItem}
+        onBack={() => setDetailVisible(false)}
       />
 
       {scannerOpen ? (

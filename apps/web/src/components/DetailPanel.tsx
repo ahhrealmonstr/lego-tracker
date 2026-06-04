@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, MapPin, Plus } from 'lucide-react';
+import { ArrowLeft, Heart, MapPin, Plus } from 'lucide-react';
 import { PartsList } from './PartsList';
 import {
   AcquisitionQuality,
@@ -23,12 +23,14 @@ export function DetailPanel({
   onAdd,
   onUpdate,
   onRemove,
+  onBack,
 }: {
   item?: LegoCatalogItem;
   ownedItem?: OwnedLegoItem;
   onAdd: (item: LegoCatalogItem, status: CollectionStatus) => void;
   onUpdate: (patch: Partial<OwnedLegoItem>) => void;
   onRemove: () => void;
+  onBack?: () => void;
 }) {
   if (!item) {
     return <section className="detail-panel empty-state">Select a set or minifig.</section>;
@@ -36,6 +38,11 @@ export function DetailPanel({
 
   return (
     <section className="detail-panel">
+      {onBack && (
+        <button type="button" className="back-button" onClick={onBack}>
+          <ArrowLeft size={16} /> Back
+        </button>
+      )}
       <div className="detail-hero">
         <img src={item.imageUrl} alt={item.name} />
         <div className="detail-heading">
