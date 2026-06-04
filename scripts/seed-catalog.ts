@@ -4,7 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'csv-parse/sync';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { join, dirname } from 'node:path';
 
+// Load scripts/.env first (service-role key), then root .env (VITE_ vars)
+const scriptsDir = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(scriptsDir, '.env') });
 dotenv.config();
 
 const SETS_URL = 'https://cdn.rebrickable.com/media/downloads/sets.csv.gz';
