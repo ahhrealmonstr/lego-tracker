@@ -15,7 +15,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "paths": {
+      "@lego-tracker/core": ["../../packages/core/src/index.ts"]
+    }
   },
   "include": ["src"],
   "references": []
