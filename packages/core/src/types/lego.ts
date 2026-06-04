@@ -51,3 +51,13 @@ export type SyncStatus = 'idle' | 'syncing' | 'error' | 'offline';
 export type SyncQueueEntry =
   | { type: 'upsert'; item: OwnedLegoItem }
   | { type: 'delete'; itemId: string; deletedAt: string };
+
+export interface SetPart {
+  partNum: string;
+  partName: string;
+  colorName: string;
+  quantity: number;
+  bagNum: number | null;
+  imgUrl: string;
+  isSpare: boolean;
+}
