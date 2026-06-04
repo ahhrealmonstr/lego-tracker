@@ -81,16 +81,16 @@ status: in-progress
 
 ## In-App Building Instructions
 
-- **Summary**: Fetch, display, and step through official Lego building instructions inside the app; also offer PDF download for offline use.
-- **Status**: backlog
+- **Summary**: Instructions section in detail panel — fetches available booklets from LEGO's CDN via a Supabase Edge Function, shows download cards per booklet, links to LEGO.com. In-app PDF viewer and per-step part tracking deferred (LEGO PDFs are 100MB+, no cross-origin access, no structured step data).
+- **Status**: done
 - **Milestone**: M5
 - **Tasks**:
-  - [ ] Source instruction PDFs via Lego's public CDN and/or Rebrickable instructions endpoint
-  - [ ] Render instructions step-by-step (page-turn / swipe navigation) using a PDF viewer component
-  - [ ] Track current step per set so users can resume where they left off
-  - [ ] Record which parts are "consumed" at each step to power the missing-parts workflow
-  - [ ] Provide PDF download button for offline/print use
-  - [ ] Surface instructions entry point from set info page and collection list
+  - [x] Source instruction PDFs via LEGO's instructions page (Edge Function scrapes page, extracts PDF links)
+  - [x] Provide PDF download button per booklet (Part 1 of N, Part 2 of N, etc.)
+  - [x] Surface instructions entry point from set info page — "Building Instructions" section with LEGO.com ↗ fallback
+  - [ ] Render instructions step-by-step — deferred (CORS + 100MB+ file sizes make in-app PDF viewer impractical)
+  - [ ] Track current step per set — deferred (depends on in-app viewer)
+  - [ ] Record parts consumed per step — deferred (no structured step data from LEGO)
 
 ## Missing-Parts List from Instructions
 
