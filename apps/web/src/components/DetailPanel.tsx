@@ -1,10 +1,12 @@
 import React from 'react';
-import { ArrowLeft, Heart, MapPin, Plus } from 'lucide-react';
+import { ArrowLeft, BookOpen, Download, Heart, MapPin, Plus } from 'lucide-react';
 import { PartsList } from './PartsList';
+import { useInstructions } from '../hooks/useInstructions';
 import {
   AcquisitionQuality,
   BuildStatus,
   CollectionStatus,
+  InstructionBooklet,
   LegoCatalogItem,
   OwnedLegoItem,
   buildStatusLabels,
@@ -150,6 +152,7 @@ export function DetailPanel({
       )}
 
       {item.type === 'set' && <PartsList item={item} />}
+      {item.type === 'set' && <InstructionsSection item={item} />}
     </section>
   );
 }
@@ -160,5 +163,51 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span>{label}</span>
       {children}
     </label>
+  );
+}
+
+function InstructionsSection({ item }: { item: LegoCatalogItem }) {
+  const { booklets, legoUrl, loading } = useInstructions(item);
+
+  return (
+    <section className="instructions-section" data-testid="instructions-section">
+      <div className="parts-list-header">
+        <h3 className="parts-heading">Building Instructions</h3>
+        {legoUrl && (
+          <a
+            href={legoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-button"
+            data-testid="instructions-lego-link"
+          >
+            LEGO.com ↗
+          </a>
+        )}
+      </div>
+      {loading && <p className="parts-loading">Loading instructions…</p>}
+      {!loading && booklets.length === 0 && (
+        <p className="parts-count">
+          {legoUrl ? 'No instruction files found.' : 'Instructions unavailable.'}
+        </p>
+      )}
+      {!loading && booklets.length > 0 && (
+        <div className="booklets-list">
+          {booklets.map((b, i) => (
+            <a
+              key={i}
+              href={b.url}
+              download
+              className="booklet-card"
+              data-testid={`booklet-${i}`}
+            >
+              <BookOpen size={16} className="booklet-icon" />
+              <span className="booklet-title">{b.title}</span>
+              <Download size={13} className="booklet-download" />
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

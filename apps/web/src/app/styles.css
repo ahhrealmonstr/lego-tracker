@@ -810,6 +810,43 @@ h1 {
   padding: 18px;
 }
 
+/* ─── Instructions ────────────────────────────────────── */
+
+.instructions-section {
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 32px;
+  padding-top: 24px;
+}
+
+.booklets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.booklet-card {
+  align-items: center;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  color: var(--color-text);
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.booklet-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.booklet-icon  { color: var(--color-accent); flex-shrink: 0; }
+.booklet-title { flex: 1; font-size: 13px; font-weight: 600; }
+.booklet-download { color: var(--color-text-subtle); flex-shrink: 0; }
+
 /* ─── Back button (mobile only) ───────────────────────── */
 
 .back-button {
