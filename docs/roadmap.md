@@ -94,16 +94,17 @@ status: in-progress
 
 ## Missing-Parts List from Instructions
 
-- **Summary**: As users follow in-app instructions, detect and export a Pick-a-Brick–compatible list of any parts they mark as missing or skip.
-- **Status**: backlog
+- **Summary**: Mark individual parts as missing directly from the parts list. Missing parts appear in a dedicated section with CSV/BSX export. Stored in OwnedLegoItem.missingPartsList alongside the collection.
+- **Status**: done
 - **Milestone**: M6
 - **Tasks**:
-  - [ ] Add per-step "mark as missing" action during instruction playback
-  - [ ] Aggregate missing parts across all steps into a set-level missing-parts list
-  - [ ] Expose missing-parts list on the set info page alongside the full parts list
-  - [ ] Allow manual addition/removal of parts from the missing list without replaying instructions
-  - [ ] Export missing-parts list as Pick-a-Brick–compatible CSV and BrickLink BSX
-  - [ ] Deep-link from the missing-parts list back to the relevant instruction step
+  - [x] Allow manual marking/unmarking of parts as missing from the parts grid
+  - [x] Aggregate missing parts into a set-level missing-parts list
+  - [x] Expose missing-parts list on the set info page alongside the full parts list
+  - [x] Remove parts from the missing list via trash icon
+  - [x] Export missing-parts list as CSV and BrickLink BSX
+  - [ ] Per-step "mark as missing" during instruction playback — deferred (in-app viewer not yet built)
+  - [ ] Deep-link from missing list to instruction step — deferred (depends on in-app viewer)
 
 ## iOS Client
 
