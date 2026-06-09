@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Barcode,
   Box,
@@ -9,6 +9,7 @@ import {
   Library,
   PackageCheck,
   Search,
+  Upload,
 } from 'lucide-react';
 import {
   CollectionStatus,
@@ -20,6 +21,7 @@ import {
   createOwnedItem,
   downloadBlob,
   findByBarcode,
+  parseOmgBricksCSV,
   searchCatalog,
   seedCatalog,
   setConfig,
@@ -60,6 +62,8 @@ export function App() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
   const [isScanningBarcode, setIsScanningBarcode] = useState(false);
+  const [importMessage, setImportMessage] = useState('');
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const { status: syncStatus, triggerSync } = useSync();
 
@@ -133,6 +137,37 @@ export function App() {
     }
   }
 
+  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text !== 'string') return;
+
+      const imported = parseOmgBricksCSV(text);
+      if (imported.length === 0) {
+        setImportMessage('No items found in file.');
+        return;
+      }
+
+      setItems((current) => {
+        let next = current;
+        for (const item of imported) {
+          next = upsertOwnedItem(next, item);
+          enqueueMutation({ type: 'upsert', item });
+        }
+        return next;
+      });
+
+      setActiveView('collection');
+      setImportMessage(`Imported ${imported.length} item${imported.length !== 1 ? 's' : ''}.`);
+    };
+    reader.readAsText(file);
+  }
+
   function handleToggleMissing(part: SetPart) {
     if (!selectedOwnedItem) return;
     const updated = toggleMissingPart(selectedOwnedItem, part);
@@ -166,7 +201,18 @@ export function App() {
           <button className="text-button" type="button" onClick={() => downloadBlob(collectionToCSV(items), 'lego-collection.csv', 'text/csv')}>
             <Download size={14} /> CSV
           </button>
+          <button className="text-button" type="button" onClick={() => importInputRef.current?.click()}>
+            <Upload size={14} /> Import
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv"
+            style={{ display: 'none' }}
+            onChange={handleImportFile}
+          />
         </div>
+        {importMessage ? <p className="scan-message">{importMessage}</p> : null}
 
         <SyncStatus status={syncStatus} onRetry={triggerSync} />
 
