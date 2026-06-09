@@ -5,6 +5,7 @@ export * from './domain/collection';
 export * from './domain/sync';
 export * from './domain/options';
 export * from './domain/export';
+export * from './domain/import';
 export * from './domain/partsExport';
 export * from './services/rebrickable';
 export * from './services/instructions';
