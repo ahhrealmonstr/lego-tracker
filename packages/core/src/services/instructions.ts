@@ -13,7 +13,7 @@ export async function fetchInstructionBooklets(setNum: string): Promise<{
   try {
     const res = await fetch(url);
     if (!res.ok) return { booklets: [], legoUrl: '' };
-    return await res.json();
+    return await res.json() as { booklets: InstructionBooklet[]; legoUrl: string };
   } catch {
     return { booklets: [], legoUrl: '' };
   }

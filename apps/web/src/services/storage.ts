@@ -46,6 +46,7 @@ function isOwnedLegoItem(item: unknown): item is OwnedLegoItem {
     typeof item.displayLocation === 'string' &&
     typeof item.notes === 'string' &&
     typeof item.missingParts === 'string' &&
+    (item.missingPartsList === undefined || Array.isArray(item.missingPartsList)) &&
     typeof item.quantity === 'number' &&
     typeof item.addedAt === 'string' &&
     typeof item.updatedAt === 'string'

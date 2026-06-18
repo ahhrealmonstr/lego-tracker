@@ -6,11 +6,17 @@
     "packages/*"
   ],
   "scripts": {
+    "test": "vitest run && npm run test -w apps/web",
+    "typecheck": "npm run build -w packages/core && tsc --noEmit -p apps/web/tsconfig.json",
+    "lint": "npm run lint:md",
     "web:dev": "npm run dev -w apps/web",
     "web:build": "npm run build -w apps/web",
     "lint:md": "markdownlint \"*.md\" \"docs/**/*.md\"",
     "supabase:init": "supabase init",
     "seed-catalog": "tsx scripts/seed-catalog.ts"
+  },
+  "overrides": {
+    "react": "18.3.1"
   },
   "devDependencies": {
     "@postgres-language-server/cli": "^0.24.0",

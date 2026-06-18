@@ -1,7 +1,7 @@
 ---
 project: lego-tracker
 version: 1.0.0
-last_synced: 2026-06-04 (M5 done)
+last_synced: 2026-06-18 (M6 done)
 last_manual_edit: 2026-05-18
 status: in-progress
 ---

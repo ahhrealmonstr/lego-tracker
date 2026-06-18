@@ -7,9 +7,7 @@ import {
   AcquisitionQuality,
   BuildStatus,
   CollectionStatus,
-  InstructionBooklet,
   LegoCatalogItem,
-  MissingSetPart,
   OwnedLegoItem,
   SetPart,
   buildStatusLabels,
@@ -213,7 +211,7 @@ function InstructionsSection({ item }: { item: LegoCatalogItem }) {
       )}
       {!loading && booklets.length > 0 && (
         <div className="booklets-list">
-          {booklets.map((b, i) => (
+          {booklets.filter(b => b.url.startsWith('https://www.lego.com/')).map((b, i) => (
             <a
               key={i}
               href={b.url}

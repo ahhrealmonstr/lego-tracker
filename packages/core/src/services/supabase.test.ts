@@ -64,6 +64,7 @@ const ownedItem = {
   status: 'collection' as const, acquiredQuality: 'new' as const,
   savedBox: true, buildStatus: 'not-started' as const,
   displayLocation: 'shelf', notes: '', missingParts: '',
+  missingPartsList: [],
   quantity: 1, addedAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -236,6 +237,23 @@ describe('Supabase Service', () => {
       client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
       expect(await loadCollectionFromCloud()).toBeNull();
     });
+
+    // SEC: missing_parts_list must survive round-trip through cloud
+    it('maps missing_parts_list from DB row to missingPartsList on loaded item', async () => {
+      const missingParts = [{ partNum: '3001', partName: 'Brick 2x4', colorName: 'Red', quantity: 1, imgUrl: '' }];
+      const rowWithMissing = { ...collectionRow, missing_parts_list: missingParts };
+      const client = makeMockClient({ data: [rowWithMissing], error: null });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const result = await loadCollectionFromCloud();
+      expect(result?.items[0].missingPartsList).toEqual(missingParts);
+    });
+
+    it('loads missingPartsList as empty array when missing_parts_list column is absent in DB row', async () => {
+      const client = makeMockClient({ data: [collectionRow], error: null });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const result = await loadCollectionFromCloud();
+      expect(result?.items[0].missingPartsList).toEqual([]);
+    });
   });
 
   describe('syncCollectionToCloud', () => {
@@ -273,6 +291,33 @@ describe('Supabase Service', () => {
             deleted_at: null,
           }),
         ]),
+        { onConflict: 'item_id,user_id' },
+      );
+    });
+
+    it('includes missing_parts_list in upsert payload', async () => {
+      const client = makeMockClient();
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const itemWithMissing = {
+        ...ownedItem,
+        missingPartsList: [{ partNum: '3001', partName: 'Brick 2x4', colorName: 'Red', quantity: 2, imgUrl: '' }],
+      };
+      await syncCollectionToCloud([{ type: 'upsert', item: itemWithMissing }]);
+      expect(client.upsert).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ missing_parts_list: itemWithMissing.missingPartsList }),
+        ]),
+        { onConflict: 'item_id,user_id' },
+      );
+    });
+
+    it('syncs missing_parts_list as empty array when missingPartsList is undefined on item', async () => {
+      const client = makeMockClient();
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const { missingPartsList: _dropped, ...itemWithoutList } = ownedItem;
+      await syncCollectionToCloud([{ type: 'upsert', item: itemWithoutList as any }]);
+      expect(client.upsert).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ missing_parts_list: [] })]),
         { onConflict: 'item_id,user_id' },
       );
     });

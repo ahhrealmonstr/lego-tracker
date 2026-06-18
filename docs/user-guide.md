@@ -1,32 +1,23 @@
 # User Guide
 
-Brick Ledger tracks LEGO sets and minifigs across a collection and wishlist. The current app is web-first and stores records locally in your browser.
+Brick Ledger tracks LEGO sets and minifigs across a collection and wishlist. Collection data syncs to Supabase so it's available across devices.
 
 ## Main Screen
 
 The app has two main areas:
 
-- Sidebar: summary counters, search, barcode scanner, tabs, and item list.
-- Detail panel: selected set or minifig details, add actions, and editable collection fields.
-
-```mermaid
-flowchart LR
-  Sidebar[Sidebar\nSearch, tabs, list, summary] --> Detail[Detail panel\nImages, metadata, actions, editable fields]
-  Detail --> Sidebar
-```
+- **Sidebar**: summary counters, search, barcode scanner, sync status, tabs, and item list.
+- **Detail panel**: selected set or minifig image, metadata, add actions, editable fields, parts list, instructions, and missing parts.
 
 ## Search
 
-Use the search box to find seeded catalog items by:
+Use the search box to find catalog items by set number, minifig number, theme, or keyword. Search chains through:
 
-- Set number, such as `10305`
-- Minifig number, such as `sw0001c`
-- Theme, such as `Icons`, `Castle`, or `Star Wars`
-- Keyword in the item name
-- Type, such as `set` or `minifig`
-- Seeded barcode value
+1. Local seed catalog (instant)
+2. Supabase catalog cache (fast)
+3. Rebrickable API (live, ~300ms debounce)
 
-Search runs against the local seeded catalog in `src/domain/catalog.ts`.
+Results from Rebrickable are cached automatically so future searches are instant.
 
 ## Add an Item
 
@@ -34,103 +25,103 @@ From the Catalog tab:
 
 1. Search or browse the catalog.
 2. Select an item to inspect its details.
-3. Click **Add to collection** to track ownership.
-4. Click **Add to wishlist** to save it for later.
-
-You can also use the plus button in a catalog row to add directly to the collection.
+3. Click **Add to collection** to track ownership, or **Add to wishlist** to save for later.
 
 ## Collection and Wishlist
 
 Use the tabs to switch views:
 
-- Catalog: searchable seeded catalog entries.
-- Collection: items you own.
-- Wishlist: items you want.
-
-When an owned or wishlist item is selected, the detail panel shows editable tracking fields.
+- **Catalog**: live-searchable catalog powered by Rebrickable.
+- **Collection**: items you own.
+- **Wishlist**: items you want.
 
 ## Detail Fields
 
 | Field | Purpose |
 | --- | --- |
 | List | Moves the item between Collection and Wishlist. |
-| Set quality when bought | Records condition at acquisition time. |
-| Building status | Tracks whether the build is not started, in progress, or complete. |
-| Display location | Records where the item is displayed or stored. |
-| Quantity | Counts duplicates and affects total estimated owned value. |
-| Box saved | Tracks whether the original box was kept. |
-| Missing parts | Stores missing part IDs, colors, or descriptive notes. |
-| Notes | Stores any other ownership notes. |
+| Set quality when bought | Records condition at acquisition. |
+| Building status | Not started / In progress / Complete. |
+| Display location | Where the item is displayed or stored. |
+| Quantity | Count of duplicates; affects estimated value total. |
+| Box saved | Whether the original box was kept. |
+| Missing parts | Freeform notes about missing parts (legacy field). |
+| Notes | Any other ownership notes. |
 
-Changes save automatically to localStorage.
+Changes save to localStorage immediately and sync to Supabase every 5 minutes.
+
+## Parts List
+
+For any set in the detail panel, scroll to the **Parts** section:
+
+- Parts are grouped by bag. Spare parts appear in a separate collapsible section.
+- Click **CSV** or **BSX** next to a bag to export just that bag.
+- Click **CSV** or **BSX** in the header to export all parts for the set.
+- BSX format is compatible with BrickLink and BrickStock.
+- Parts are fetched from Rebrickable on first view and cached in Supabase.
+
+## Missing Parts
+
+Use the **!** button on any part card to mark it as missing. Marked parts appear in the **Missing Parts** section below the full parts list:
+
+- Click the trash icon on a missing part to remove it from the list.
+- Export the missing list as CSV or BSX for ordering replacements on BrickLink.
+
+## Building Instructions
+
+Scroll to **Building Instructions** in the detail panel for any set:
+
+- Download booklets directly from the LEGO.com CDN.
+- If no PDFs are found, click the **LEGO.com ↗** link to browse instructions manually.
 
 ## Summary Counters
 
 | Counter | Meaning |
 | --- | --- |
-| Owned | Number of items in the Collection list. |
-| Wishlist | Number of items in the Wishlist list. |
-| Value | Sum of estimated value for owned items multiplied by quantity. |
-| Built | Number of items marked Complete. |
+| Owned | Items in the Collection list. |
+| Wishlist | Items in the Wishlist list. |
+| Value | Sum of estimated value × quantity for owned items. |
+| Built | Items with build status Complete. |
 
 ## Barcode Scanning
 
-Open the scanner with the barcode icon beside the search box.
+Click the barcode icon beside search. The app chains: seed catalog → Supabase cache → Rebrickable live lookup.
 
 ```mermaid
 flowchart TD
   A[Open scanner] --> B{BarcodeDetector available?}
   B -- Yes --> C[Request camera permission]
   C --> D{Barcode detected?}
-  D -- Known barcode --> E[Add matching item to collection]
-  D -- Unknown barcode --> F[Fill search with scanned code]
-  B -- No --> G[Use manual barcode input]
-  C -- Permission denied --> G
-  G --> H{Known barcode?}
+  D -- Known --> E[Add item to collection]
+  D -- Unknown --> F[Fill search with code]
+  B -- No --> G[Manual barcode input]
+  C -- Denied --> G
+  G --> H{Known?}
   H -- Yes --> E
   H -- No --> F
 ```
 
-Seeded barcode examples:
+## Cloud Sync
 
-| Barcode | Catalog Item |
-| --- | --- |
-| `673419357562` | Lion Knights Castle |
-| `673419313957` | Tree House |
-| `673419340625` | AT-AT |
-| `673419340892` | Titanic |
+Collection data syncs to Supabase automatically:
+
+- On app load (pull from cloud, reconcile with local)
+- Every 5 minutes in the background
+- Immediately on coming back online after being offline
+
+The **Sync** indicator in the sidebar shows current status (idle / syncing / error / offline). Click **Retry** on error to trigger a manual sync.
+
+## Export
+
+In the sidebar, click **JSON** or **CSV** to download your full collection.
 
 ## Remove an Item
 
-1. Open Collection or Wishlist.
-2. Select the item.
-3. Click **Remove from lists** in the detail form.
+1. Select the item in Collection or Wishlist.
+2. Click **Remove from lists** in the detail form.
 
-The item remains available in the Catalog tab because removal only deletes the local owned/wishlist record.
+The item remains visible in the Catalog tab.
 
-## Example Workflow
+## Privacy and Data
 
-```mermaid
-sequenceDiagram
-  participant User
-  participant App
-  participant Catalog
-  participant Storage
-
-  User->>App: Search "10305"
-  App->>Catalog: Filter seeded catalog
-  Catalog-->>App: Lion Knights Castle
-  User->>App: Add to collection
-  App->>Storage: Save owned item
-  User->>App: Set status Complete and location Office shelf
-  App->>Storage: Save updated item
-  User->>App: Refresh page
-  App->>Storage: Load and validate saved collection
-  Storage-->>App: Valid owned items
-```
-
-## Privacy and Data Ownership
-
-The current version stores data only in your browser. It does not upload collection data to a server.
-
-Clearing browser site data, switching browsers, or using a different device means the app will not see the previous local collection.
+Collection data is stored in your browser (localStorage) and synced to your Supabase project. No data is shared with third parties. Parts data comes from [Rebrickable](https://rebrickable.com) and is cached in your Supabase database.

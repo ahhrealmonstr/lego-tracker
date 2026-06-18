@@ -3,5 +3,7 @@ dist/
 .playwright-cli/
 .playwright-mcp/
 output/
+coverage/
+*.log
 .env
 .DS_Store

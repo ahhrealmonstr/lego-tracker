@@ -12,8 +12,8 @@ Deno.serve(async (req) => {
   const { searchParams } = new URL(req.url);
   const setNum = searchParams.get('set_num') ?? '';
 
-  if (!setNum) {
-    return new Response(JSON.stringify({ error: 'set_num required' }), {
+  if (!setNum || !/^\d{3,6}(-\d+)?$/.test(setNum)) {
+    return new Response(JSON.stringify({ error: 'set_num required and must be a valid LEGO set number' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

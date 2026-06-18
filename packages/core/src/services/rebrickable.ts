@@ -50,7 +50,7 @@ async function fetchFromRebrickable<T>(endpoint: string, params: Record<string, 
     if (!response.ok) {
       return null;
     }
-    return await response.json();
+    return await response.json() as T;
   } catch (error) {
     if (error instanceof RateLimitError) throw error;
     console.error('Rebrickable fetch error:', error);
@@ -169,7 +169,7 @@ export async function fetchPartsForInventory(setNum: string, bagNum: number | nu
         throw new RateLimitError('Rate limit exceeded', retryAfter ? parseInt(retryAfter, 10) : undefined);
       }
       if (!response.ok) break;
-      const page: RebrickablePartsPage = await response.json();
+      const page = await response.json() as RebrickablePartsPage;
       for (const entry of page.results) {
         parts.push({
           partNum: entry.part.part_num,
@@ -181,7 +181,8 @@ export async function fetchPartsForInventory(setNum: string, bagNum: number | nu
           isSpare: entry.is_spare,
         });
       }
-      url = page.next;
+      // Validate next URL stays within Rebrickable before following
+      url = page.next && page.next.startsWith('https://rebrickable.com/') ? page.next : null;
     } catch (error) {
       if (error instanceof RateLimitError) throw error;
       break;

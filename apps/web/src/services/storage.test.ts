@@ -51,6 +51,43 @@ describe('storage service', () => {
     });
   });
 
+  // SEC-R002: missingPartsList must be validated to prevent tampered localStorage
+  describe('missingPartsList field validation', () => {
+    it('accepts an item with a valid missingPartsList array', () => {
+      const item = { ...baseItem, missingPartsList: [{ partNum: '3001', partName: 'Brick', colorName: 'Red', quantity: 1, imgUrl: '' }] };
+      localStorage.setItem('brick-ledger.collection.v1', JSON.stringify([item]));
+      expect(loadCollection()).toHaveLength(1);
+    });
+
+    it('accepts an item with an empty missingPartsList array', () => {
+      localStorage.setItem('brick-ledger.collection.v1', JSON.stringify([{ ...baseItem, missingPartsList: [] }]));
+      expect(loadCollection()).toHaveLength(1);
+    });
+
+    it('accepts an item without a missingPartsList field (undefined)', () => {
+      localStorage.setItem('brick-ledger.collection.v1', JSON.stringify([baseItem]));
+      expect(loadCollection()).toHaveLength(1);
+    });
+
+    it('rejects an item where missingPartsList is a string', () => {
+      const tampered = JSON.stringify([{ ...baseItem, missingPartsList: 'injected-string' }]);
+      localStorage.setItem('brick-ledger.collection.v1', tampered);
+      expect(loadCollection()).toHaveLength(0);
+    });
+
+    it('rejects an item where missingPartsList is a number', () => {
+      const tampered = JSON.stringify([{ ...baseItem, missingPartsList: 42 }]);
+      localStorage.setItem('brick-ledger.collection.v1', tampered);
+      expect(loadCollection()).toHaveLength(0);
+    });
+
+    it('rejects an item where missingPartsList is an object (not array)', () => {
+      const tampered = JSON.stringify([{ ...baseItem, missingPartsList: { partNum: '3001' } }]);
+      localStorage.setItem('brick-ledger.collection.v1', tampered);
+      expect(loadCollection()).toHaveLength(0);
+    });
+  });
+
   describe('saveCollection', () => {
     it('writes items to localStorage under the correct key', () => {
       saveCollection([baseItem]);

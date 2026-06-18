@@ -164,6 +164,7 @@ export async function syncCollectionToCloud(queue: SyncQueueEntry[]): Promise<vo
       display_location: e.item.displayLocation,
       notes: e.item.notes,
       missing_parts: e.item.missingParts,
+      missing_parts_list: e.item.missingPartsList ?? [],
       quantity: e.item.quantity,
       added_at: e.item.addedAt,
       updated_at: e.item.updatedAt,

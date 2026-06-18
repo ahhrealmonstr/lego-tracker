@@ -1,35 +1,54 @@
 # Architecture
 
-Brick Ledger starts as a local-first web app with a shared domain model that can be reused by an iOS client later.
+Brick Ledger is a local-first web app with a shared domain model designed to be reused by a future iOS client.
 
 ## Goals
 
-- Keep the first version fast and usable without accounts or a backend.
 - Keep collection concepts in shared, explicit types.
-- Isolate browser-only functionality behind service modules.
-- Make future catalog and sync backends replaceable without rewriting the UI.
+- Isolate browser-only and network functionality behind service modules.
+- Make catalog and sync backends replaceable without rewriting the UI.
+
+## Monorepo Layout
+
+```text
+apps/web/            Vite + React web app
+packages/core/       Shared domain logic, types, and services
+supabase/functions/  Edge Functions (instructions scraper)
+supabase/migrations/ Database schema
+```
 
 ## Layers
 
 | Layer | Path | Responsibility |
 | --- | --- | --- |
-| Types | `src/types` | Shared TypeScript contracts for catalog and owned LEGO items. |
-| Domain | `src/domain` | Pure search, collection, summary, upsert, and label logic. |
-| Services | `src/services` | Browser/device boundaries such as localStorage and barcode scanning. |
-| API/UI | `src/api` | React entrypoint, application state, and user interface. |
+| Types | `packages/core/src/types/` | Shared TypeScript contracts. No imports. |
+| Domain | `packages/core/src/domain/` | Pure business logic: search, collection, summary, upsert, export. |
+| Services | `packages/core/src/services/` | External integrations: Supabase, Rebrickable API. |
+| Infrastructure | `packages/core/src/infrastructure/` | Cross-cutting browser utilities (e.g. `downloadBlob`). |
+| App Services | `apps/web/src/services/` | Browser-local concerns: localStorage, sync queue, barcode. |
+| Hooks | `apps/web/src/hooks/` | React hooks composing domain + services. |
+| Components | `apps/web/src/components/` | React UI components. |
+| App | `apps/web/src/app/` | Root application state and composition. |
 
 ## Dependency Direction
 
 ```mermaid
 flowchart TD
-  UI[src/api React UI] --> Domain[src/domain pure helpers]
-  UI --> Services[src/services browser APIs]
-  Domain --> Types[src/types contracts]
-  Services --> Types
-  UI --> Types
+  App[apps/web App] --> Components
+  App --> Hooks
+  Hooks --> AppServices[apps/web services]
+  Hooks --> Core[packages/core]
+  Components --> Core
+  AppServices --> Core
+  Core --> Types[core/types]
+  Core_Domain[core/domain] --> Types
+  Core_Services[core/services] --> Types
+  Core_Services --> Core_Domain
 ```
 
-The domain layer does not import React, browser APIs, or service modules. This keeps core behavior portable for future iOS, backend, or test-suite work.
+The domain layer must not import from the services layer.
+
+> **Known violation:** `packages/core/src/domain/catalog.ts` currently imports from `services/rebrickable` and `services/supabase` for the catalog orchestration. This is a tracked architectural debt — the orchestration belongs in a dedicated catalog service, keeping `catalog.ts` pure domain logic.
 
 ## Runtime Data Flow
 
@@ -37,98 +56,79 @@ The domain layer does not import React, browser APIs, or service modules. This k
 sequenceDiagram
   participant Browser
   participant UI as React UI
-  participant Domain
-  participant Storage as localStorage service
+  participant Domain as core/domain
+  participant Supabase
+  participant Rebrickable
 
   Browser->>UI: Load app
-  UI->>Storage: loadCollection()
-  Storage->>Storage: JSON.parse()
-  Storage->>Storage: filter with isOwnedLegoItem()
-  Storage-->>UI: OwnedLegoItem[]
+  UI->>Domain: loadCollection() from localStorage
+  UI->>Supabase: loadCollectionFromCloud()
+  Supabase-->>UI: OwnedLegoItem[] (reconciled)
+  Browser->>UI: Search query
+  UI->>Rebrickable: searchRebrickable()
+  Rebrickable-->>UI: LegoCatalogItem[]
   Browser->>UI: Add or edit item
   UI->>Domain: createOwnedItem() / upsertOwnedItem()
-  Domain-->>UI: Updated collection
-  UI->>Storage: saveCollection()
+  UI->>Supabase: syncCollectionToCloud() (queued, every 5m)
 ```
 
 ## Data Model
 
-`LegoCatalogItem` describes catalog data:
+`LegoCatalogItem` — catalog data:
+- `id`, `type` (set | minifig), `number`, `name`, `theme`, `year`
+- `pieceCount`, `retired`, `estimatedValue`, `imageUrl`, `barcode?`
 
-- ID
-- Set or minifig type
-- Number
-- Name
-- Theme
-- Year
-- Piece count
-- Retirement status
-- Estimated value
-- Image URL
-- Optional barcode
+`OwnedLegoItem` extends `LegoCatalogItem` with ownership tracking:
+- `status` (collection | wishlist), `acquiredQuality`, `savedBox`, `buildStatus`
+- `displayLocation`, `notes`, `missingParts` (freeform string)
+- `missingPartsList?: MissingSetPart[]` (structured missing parts, M6)
+- `quantity`, `addedAt`, `updatedAt`
 
-`OwnedLegoItem` extends catalog data with ownership tracking:
+`SetPart` — parts list entry (M5):
+- `partNum`, `partName`, `colorName`, `quantity`, `bagNum`, `imgUrl`, `isSpare`
 
-- Collection or wishlist status
-- Acquisition quality
-- Saved-box flag
-- Build status
-- Display location
-- Notes
-- Missing parts
-- Quantity
-- Added and updated timestamps
+`MissingSetPart` — subset of `SetPart` without bag/spare fields (M6)
+
+`InstructionBooklet` — `{ title, url }` (M5)
+
+`SyncQueueEntry` — `{ type: 'upsert', item } | { type: 'delete', itemId, deletedAt }`
 
 ## Persistence
 
-The current app persists collection and wishlist records in browser localStorage under:
+**Local:** `brick-ledger.collection.v1` in localStorage. Validated with `isOwnedLegoItem()` on load.
 
-```text
-brick-ledger.collection.v1
-```
+**Cloud:** Supabase `user_collection` table, RLS-enforced per user. Sync queue (`brick-ledger.sync-queue.v1`) drains every 5 minutes or on reconnect.
 
-`loadCollection()` intentionally validates loaded entries with `isOwnedLegoItem()` before returning them. This prevents malformed localStorage data from leaking into the UI.
+**Parts cache:** Supabase `set_parts` table — lazy-fetched per set on first parts-list view.
 
-## Catalog Source
+**Catalog cache:** Supabase `catalog_cache` table — lazy-fetched from Rebrickable, seeded in bulk via `npm run seed-catalog`.
 
-Catalog lookup is seeded locally in `src/domain/catalog.ts`.
+## Catalog Lookup Chain
 
 ```mermaid
 flowchart LR
-  Search[Search query] --> Seed[seedCatalog]
-  Seed --> Match[Filtered catalog items]
-  Barcode[Barcode] --> Lookup[findByBarcode]
-  Lookup --> Match
+  Query[Search / Barcode] --> Seed[seedCatalog in-memory]
+  Seed -- miss --> SupabaseCache[(Supabase catalog_cache)]
+  SupabaseCache -- miss --> Rebrickable[(Rebrickable API)]
+  Rebrickable -- hit --> AutoCache[Auto-cache to Supabase]
 ```
-
-A future catalog service can replace or supplement this file with:
-
-- Rebrickable
-- Brickset
-- BrickLink-derived data
-- A Supabase-backed catalog mirror
-
-The desired boundary is to keep search result objects compatible with `LegoCatalogItem` so the React screens and ownership logic remain mostly unchanged.
 
 ## Future iOS Path
 
-The current TypeScript model maps cleanly to an iOS data model:
-
 | Web Type | iOS Equivalent |
 | --- | --- |
-| `LegoCatalogItem` | Catalog set/minifig DTO or Swift model |
+| `LegoCatalogItem` | Catalog DTO / Swift model |
 | `OwnedLegoItem` | Persisted collection record |
-| `CollectionStatus` | Swift enum for collection or wishlist |
-| `AcquisitionQuality` | Swift enum for item condition |
-| `BuildStatus` | Swift enum for build progress |
-
-When a backend is added, both web and iOS should talk to the same catalog and collection API rather than maintaining separate persistence rules.
+| `CollectionStatus` | Swift enum |
+| `AcquisitionQuality` | Swift enum |
+| `BuildStatus` | Swift enum |
+| `MissingSetPart` | Missing part record |
 
 ## Change Guidelines
 
-- Put reusable business logic in `src/domain`.
-- Put browser APIs, camera APIs, localStorage, or future network clients in `src/services`.
-- Keep `src/api/main.tsx` focused on UI state and composition.
-- Extend `src/types/lego.ts` before adding ad hoc fields to UI state.
+- Put reusable business logic in `packages/core/src/domain/`.
+- Put external API clients in `packages/core/src/services/`.
+- Put browser-local concerns (localStorage, queue, camera) in `apps/web/src/services/`.
+- Extend `packages/core/src/types/lego.ts` before adding ad hoc fields to UI state.
 - Update `docs/user-guide.md` whenever visible behavior changes.
 - Update this file when layer responsibilities or data flow change.
