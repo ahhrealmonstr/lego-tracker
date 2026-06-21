@@ -88,6 +88,50 @@
       },
       "suppressionCount": 0,
       "findingIds": []
+    },
+    {
+      "capturedAt": "2026-06-05T18:15:27.976Z",
+      "commitHash": "5381ab799625233d6ec40239770f34109d682e13",
+      "securityScore": 100,
+      "totalFindings": 0,
+      "bySeverity": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "byCategory": {},
+      "supplyChain": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0,
+        "info": 0,
+        "total": 0
+      },
+      "suppressionCount": 0,
+      "findingIds": []
+    },
+    {
+      "capturedAt": "2026-06-21T08:12:30.419Z",
+      "commitHash": "ad4fb48caffdf8dde437aa8236cdcf928fa5b39f",
+      "securityScore": 100,
+      "totalFindings": 0,
+      "bySeverity": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "byCategory": {},
+      "supplyChain": {
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0,
+        "info": 0,
+        "total": 0
+      },
+      "suppressionCount": 0,
+      "findingIds": []
     }
   ],
   "findingLifecycles": []

@@ -64,6 +64,6 @@
     ]
   },
   "enabledPlugins": {
-    "oracle@oracle": true
+    "canary@bop-clocktower": true
   }
 }

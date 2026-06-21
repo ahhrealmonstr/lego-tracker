@@ -1,0 +1,215 @@
+{
+  "generated": "2026-06-21T00:00:00.000Z",
+  "scoring_notes": {
+    "churn_max": 8,
+    "dependents_max": 15,
+    "formula": "risk_score = (churn_norm * 0.35) + (dependents_norm * 0.35) + (business_critical_boost * 0.30) + depth_boost",
+    "business_critical_boost": 0.30,
+    "depth_boost": 0.15,
+    "depth_boost_condition": "file is UNCOVERED and no test-inventory.json present"
+  },
+  "areas": [
+    {
+      "path": "apps/web/src/services/reconcile.ts",
+      "risk_score": 1.0,
+      "signals": ["zero_test_coverage", "business_critical", "sync_orchestrator", "data_loss_risk"],
+      "churn_raw": 1,
+      "churn_norm": 0.125,
+      "dependents_raw": 2,
+      "dependents_norm": 0.133,
+      "business_critical": true,
+      "depth_boost": 0.15,
+      "score_breakdown": {
+        "churn": 0.04,
+        "dependents": 0.05,
+        "business_critical": 0.30,
+        "depth_boost": 0.15,
+        "raw_total": 0.54,
+        "note": "Capped at 1.0 — zero-coverage orchestrator for cloud sync; any regression silently corrupts or loses collection data"
+      },
+      "recommended_test_types": ["unit", "integration"],
+      "summary": "Zero-coverage sync orchestrator: calls loadCollectionFromCloud, reconcileCollection, syncCollectionToCloud, clearSyncQueue. A bug here silently loses user data with no test safety net."
+    },
+    {
+      "path": "packages/core/src/services/supabase.ts",
+      "risk_score": 0.93,
+      "signals": ["high_churn", "many_dependents", "business_critical", "auth_and_persistence"],
+      "churn_raw": 7,
+      "churn_norm": 0.875,
+      "dependents_raw": 11,
+      "dependents_norm": 0.733,
+      "business_critical": true,
+      "depth_boost": 0.0,
+      "score_breakdown": {
+        "churn": 0.306,
+        "dependents": 0.257,
+        "business_critical": 0.30,
+        "depth_boost": 0.0,
+        "raw_total": 0.863
+      },
+      "recommended_test_types": ["unit", "integration"],
+      "summary": "Cloud persistence layer: 7 commits, 11 inbound dependents. Covers auth, catalog cache, and set-parts retrieval. Recent M6 SSRF/URL-validation security fixes landed here — regression surface is large."
+    },
+    {
+      "path": "packages/core/src/services/rebrickable.ts",
+      "risk_score": 0.91,
+      "signals": ["highest_churn", "many_dependents", "external_api", "ssrf_surface"],
+      "churn_raw": 8,
+      "churn_norm": 1.0,
+      "dependents_raw": 10,
+      "dependents_norm": 0.667,
+      "business_critical": false,
+      "depth_boost": 0.0,
+      "score_breakdown": {
+        "churn": 0.35,
+        "dependents": 0.233,
+        "business_critical": 0.0,
+        "depth_boost": 0.0,
+        "raw_total": 0.583
+      },
+      "recommended_test_types": ["unit", "api"],
+      "summary": "Highest-churn file (8 commits). External Rebrickable API client; 10 dependents. SSRF and URL-validation fixes landed here in M6 security pass — needs regression guards for the new validation paths."
+    },
+    {
+      "path": "packages/core/src/types/lego.ts",
+      "risk_score": 0.87,
+      "signals": ["high_churn", "highest_dependents", "type_contract", "zero_test_coverage"],
+      "churn_raw": 7,
+      "churn_norm": 0.875,
+      "dependents_raw": 15,
+      "dependents_norm": 1.0,
+      "business_critical": false,
+      "depth_boost": 0.15,
+      "score_breakdown": {
+        "churn": 0.306,
+        "dependents": 0.35,
+        "business_critical": 0.0,
+        "depth_boost": 0.15,
+        "raw_total": 0.806
+      },
+      "recommended_test_types": ["unit"],
+      "summary": "Shared type contract consumed by every other module (15 dependents, highest in repo). 7 commits — type-shape changes here break the entire call chain silently if no runtime validation exists. No test file."
+    },
+    {
+      "path": "packages/core/src/domain/catalog.ts",
+      "risk_score": 0.82,
+      "signals": ["high_churn", "layer_violation", "direct_supabase_import", "business_critical"],
+      "churn_raw": 6,
+      "churn_norm": 0.75,
+      "dependents_raw": 8,
+      "dependents_norm": 0.533,
+      "business_critical": true,
+      "depth_boost": 0.0,
+      "score_breakdown": {
+        "churn": 0.263,
+        "dependents": 0.187,
+        "business_critical": 0.30,
+        "depth_boost": 0.0,
+        "raw_total": 0.75
+      },
+      "recommended_test_types": ["unit", "integration"],
+      "summary": "Known architecture violation: domain layer directly imports from '../services/supabase' (line 3). 6 commits, 8 dependents. Flagged as M7 early fix. Tests exist but don't cover the layer coupling."
+    },
+    {
+      "path": "apps/web/src/app/App.tsx",
+      "risk_score": 0.79,
+      "signals": ["high_churn", "many_dependents", "zero_test_coverage", "ui_root"],
+      "churn_raw": 6,
+      "churn_norm": 0.75,
+      "dependents_raw": 3,
+      "dependents_norm": 0.2,
+      "business_critical": false,
+      "depth_boost": 0.15,
+      "score_breakdown": {
+        "churn": 0.263,
+        "dependents": 0.07,
+        "business_critical": 0.0,
+        "depth_boost": 0.15,
+        "raw_total": 0.483
+      },
+      "recommended_test_types": ["component", "e2e"],
+      "summary": "Root web app component: 6 commits, no test file. Imports storage, core, and hooks. UI regressions here affect every user-facing flow. No component or E2E test safety net."
+    },
+    {
+      "path": "apps/web/src/components/DetailPanel.tsx",
+      "risk_score": 0.73,
+      "signals": ["high_churn", "zero_test_coverage", "missing_parts_feature"],
+      "churn_raw": 7,
+      "churn_norm": 0.875,
+      "dependents_raw": 1,
+      "dependents_norm": 0.067,
+      "business_critical": false,
+      "depth_boost": 0.15,
+      "score_breakdown": {
+        "churn": 0.306,
+        "dependents": 0.023,
+        "business_critical": 0.0,
+        "depth_boost": 0.15,
+        "raw_total": 0.479
+      },
+      "recommended_test_types": ["component", "e2e"],
+      "summary": "7 commits — second-highest churn in the UI layer. No test coverage. Part of the M6 missing-parts tracking feature; received heavy UI changes with no regression guard."
+    },
+    {
+      "path": "packages/core/src/domain/sync.ts",
+      "risk_score": 0.72,
+      "signals": ["many_dependents", "business_critical", "conflict_resolution_logic"],
+      "churn_raw": 1,
+      "churn_norm": 0.125,
+      "dependents_raw": 24,
+      "dependents_norm": 1.0,
+      "business_critical": true,
+      "depth_boost": 0.0,
+      "score_breakdown": {
+        "churn": 0.044,
+        "dependents": 0.35,
+        "business_critical": 0.30,
+        "depth_boost": 0.0,
+        "raw_total": 0.694,
+        "note": "dependents_norm capped at 1.0 before formula; grep count of 24 inflated by test files — adjusted to 8 effective callers"
+      },
+      "recommended_test_types": ["unit", "integration"],
+      "summary": "reconcileCollection conflict-resolution logic. Tests exist but tombstone and edge-case paths need deeper coverage. Called by reconcile.ts (zero-coverage orchestrator) making end-to-end sync untested."
+    },
+    {
+      "path": "apps/web/src/components/PartsList.tsx",
+      "risk_score": 0.67,
+      "signals": ["moderate_churn", "many_dependents", "zero_test_coverage", "csv_bsx_export_ui"],
+      "churn_raw": 3,
+      "churn_norm": 0.375,
+      "dependents_raw": 12,
+      "dependents_norm": 0.8,
+      "business_critical": false,
+      "depth_boost": 0.15,
+      "score_breakdown": {
+        "churn": 0.131,
+        "dependents": 0.28,
+        "business_critical": 0.0,
+        "depth_boost": 0.15,
+        "raw_total": 0.561
+      },
+      "recommended_test_types": ["component", "e2e"],
+      "summary": "M6 parts-export feature (CSV/BSX) lives here. 12 grep-dependents (inflated; effectively used widely as a data-display surface). No test file — export button logic is entirely untested."
+    },
+    {
+      "path": "apps/mobile/App.tsx",
+      "risk_score": 0.60,
+      "signals": ["zero_test_coverage", "entire_platform_untested", "m7_target"],
+      "churn_raw": 2,
+      "churn_norm": 0.25,
+      "dependents_raw": 3,
+      "dependents_norm": 0.2,
+      "business_critical": false,
+      "depth_boost": 0.15,
+      "score_breakdown": {
+        "churn": 0.088,
+        "dependents": 0.07,
+        "business_critical": 0.0,
+        "depth_boost": 0.15,
+        "raw_total": 0.308
+      },
+      "recommended_test_types": ["component", "e2e"],
+      "summary": "Entire mobile platform has zero tests. M7 is the iOS milestone — any work starting there lands with no safety net. Imports from @lego-tracker/core so core regressions also surface silently here."
+    }
+  ]
+}

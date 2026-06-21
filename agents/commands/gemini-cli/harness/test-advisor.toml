@@ -19,7 +19,7 @@ Phases:
 --- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-test-advisor/SKILL.md) ---
 # Harness Test Advisor
 
-> Graph-based test selection. Answers: "I changed these files — what tests should I run?"
+> Two modes: (1) **Test Selection** — "I changed these files, what tests should I run?" (2) **Coverage Audit** — "Show me all coverage gaps across the project and rate quality of existing tests using oracle agents."
 
 ## When to Use
 
@@ -27,8 +27,8 @@ Phases:
 - In CI — optimize test suite execution order
 - When a test fails — understand which changes could have caused it
 - When `on_pr` triggers fire
-- NOT for writing tests (use harness-tdd)
-- NOT for test quality analysis (out of scope)
+- **Coverage Audit**: when the user asks for a "deep dive", "coverage gaps", "coverage plan", or "what's untested"
+- NOT for writing tests (use harness-tdd or oracle-test-author)
 
 ## Prerequisites
 
@@ -50,7 +50,79 @@ run `harness scan` to refresh before proceeding. (Staleness sensitivity: **Mediu
 **If no graph exists:** Output "Running without graph (run `harness scan` to
 enable full analysis)" and use fallback strategies for all subsequent steps.
 
-## Process
+## Coverage Audit Mode (Oracle-Enhanced)
+
+When the user asks for a coverage deep dive, gap analysis, or coverage plan — skip the diff-based flow and run the full audit instead.
+
+### Phase A: INVENTORY — Map Source Files to Tests
+
+1. **Enumerate source files.** Find all `.ts` / `.tsx` files under source directories (typically `packages/*/src/`, `apps/*/src/`), excluding `*.test.ts`, `*.spec.ts`, `*.d.ts`, `node_modules/`, `dist/`.
+
+   ```bash
+   find packages apps -type f \( -name "*.ts" -o -name "*.tsx" \) \
+     ! -name "*.test.*" ! -name "*.spec.*" ! -name "*.d.ts" \
+     ! -path "*/node_modules/*" ! -path "*/dist/*"
+   ```
+
+2. **Enumerate test files.** Find all `*.test.ts` / `*.spec.ts` files in the same trees.
+
+3. **Build source → test map.** For each source file, look for a matching test via:
+   - Filename convention (`foo.ts` → `foo.test.ts` in same or sibling `__tests__/` dir)
+   - Import parsing (grep test files for `import.*from.*<source-basename>`)
+
+4. **Split into two lists:**
+   - **Covered**: source files with at least one test file mapped
+   - **Uncovered**: source files with no test file
+
+### Phase B: QUALITY REVIEW — Oracle Test Review on Covered Files
+
+For each covered source file, invoke the `oracle:oracle-review-test` agent on its test file:
+
+```
+Use the oracle-test-reviewer agent to review <test-file>.
+Context: the source file under test is <source-file>.
+Report: coverage gaps, missing edge cases, anti-patterns, brittleness risks.
+Return a structured summary: { file, gaps: string[], severity: "low"|"medium"|"high" }
+```
+
+Cap at **10 files** per run to avoid context overflow. Prioritize by file size (largest first) or domain criticality.
+
+### Phase C: GAP REPORT — Synthesize and Prioritize
+
+Output a unified coverage plan:
+
+```markdown
+## Coverage Audit Report
+
+### Uncovered Files (no tests exist)
+| File | Lines | Priority |
+|------|-------|----------|
+| packages/core/src/services/auth.ts | 120 | high |
+...
+
+### Covered Files — Quality Gaps (from oracle review)
+| Test File | Severity | Top Gap |
+|-----------|----------|---------|
+| catalog.test.ts | medium | missing error-path coverage for network timeout |
+...
+
+### Recommended Next Steps
+1. **Write tests for** <top 3 uncovered files> — use oracle-test-author
+2. **Improve** <top 2 quality gaps> — use oracle-test-author to add missing cases
+3. **Defer** <low-priority gaps>
+```
+
+### Oracle Integration Notes
+
+- Use the `oracle:oracle-review-test` agent (maps to `oracle-test-reviewer` persona) for quality review of existing tests.
+- Use the `oracle:oracle-write-test` agent (maps to `oracle-test-author` persona) when the user wants to act on findings.
+- Use the `oracle:oracle-pick-framework` agent (maps to `oracle-framework-advisor` persona) when uncovered files span both domain logic and UI — framework choice may differ per file.
+
+---
+
+## Test Selection Mode (Original)
+
+When the user provides changed files or asks what to run after a diff — use this mode.
 
 ### Phase 1: PARSE — Identify Changed Files
 
