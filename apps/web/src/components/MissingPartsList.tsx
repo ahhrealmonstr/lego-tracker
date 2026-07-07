@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { type MissingSetPart, type SetPart, partsToCSV, partsToBSX, downloadBlob } from '@lego-tracker/core';
+import { type MissingSetPart, type SetPart, partsToCSV, partsToBSX, partsToLDR, downloadBlob } from '@lego-tracker/core';
 
 export function MissingPartsList({
   parts,
@@ -39,6 +39,15 @@ export function MissingPartsList({
             onClick={() => downloadBlob(partsToBSX(asParts), `${setNumber}-missing.bsx`, 'application/xml')}
           >
             BSX
+          </button>
+          <button
+            type="button"
+            className="text-button"
+            data-testid="missing-export-ldr"
+            title="Open in BrickLink Studio or LDView"
+            onClick={() => downloadBlob(partsToLDR(asParts, `Set ${setNumber} — Missing Parts`), `${setNumber}-missing.ldr`, 'text/plain')}
+          >
+            LDR
           </button>
         </div>
       </div>

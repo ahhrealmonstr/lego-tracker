@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { partsToCSV, partsToBSX } from './partsExport';
+import { partsToCSV, partsToBSX, partsToLDR } from './partsExport';
 import type { SetPart } from '../types/lego';
 
 const part1: SetPart = {
@@ -42,6 +42,48 @@ describe('partsToCSV', () => {
     // Must not appear as a bare unquoted formula start
     expect(csv).not.toMatch(/^=DANGEROUS/m);
     expect(csv).not.toMatch(/^[+]malicious/m);
+  });
+});
+
+describe('partsToLDR', () => {
+  it('returns valid LDraw header', () => {
+    const ldr = partsToLDR([], 'Test Model');
+    expect(ldr).toContain('0 Test Model');
+    expect(ldr).toContain('0 !LDRAW_ORG Unofficial_Model');
+  });
+
+  it('emits one line per quantity unit', () => {
+    const ldr = partsToLDR([part1]); // quantity 2
+    const brickLines = ldr.split('\r\n').filter(l => l.startsWith('1 '));
+    expect(brickLines).toHaveLength(2);
+  });
+
+  it('uses LDraw colour 4 for Red', () => {
+    const ldr = partsToLDR([part1]);
+    expect(ldr).toContain('1 4 ');
+  });
+
+  it('falls back to colour 16 for unknown colour names', () => {
+    const unknownPart: SetPart = { ...part1, colorName: 'Sparkle Unicorn Pink', quantity: 1 };
+    const ldr = partsToLDR([unknownPart]);
+    expect(ldr).toContain('1 16 ');
+  });
+
+  it('references the 3024 plate part', () => {
+    const ldr = partsToLDR([part1]);
+    expect(ldr).toContain('3024.dat');
+  });
+
+  it('includes a totals comment at the end', () => {
+    const ldr = partsToLDR([part1, part2]);
+    expect(ldr).toContain('2 unique parts');
+    expect(ldr).toContain('3 total pieces');
+  });
+
+  it('returns a summary-only file for empty parts', () => {
+    const ldr = partsToLDR([]);
+    const brickLines = ldr.split('\r\n').filter(l => l.startsWith('1 '));
+    expect(brickLines).toHaveLength(0);
   });
 });
 
