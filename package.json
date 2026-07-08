@@ -19,8 +19,6 @@
     "react": "18.3.1"
   },
   "devDependencies": {
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
     "@postgres-language-server/cli": "^0.24.0",
     "csv-parse": "^5.6.0",
     "dotenv": "^16.4.0",
