@@ -16,7 +16,9 @@
     "seed-catalog": "tsx scripts/seed-catalog.ts"
   },
   "overrides": {
-    "react": "18.3.1"
+    "react": "18.3.1",
+    "@types/react": "18.3.28",
+    "@types/react-dom": "18.3.7"
   },
   "devDependencies": {
     "@postgres-language-server/cli": "^0.24.0",
