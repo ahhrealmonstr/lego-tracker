@@ -16,11 +16,11 @@
     "seed-catalog": "tsx scripts/seed-catalog.ts"
   },
   "overrides": {
-    "react": "18.3.1",
-    "@types/react": "18.3.28",
-    "@types/react-dom": "18.3.7"
+    "react": "18.3.1"
   },
   "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
     "@postgres-language-server/cli": "^0.24.0",
     "csv-parse": "^5.6.0",
     "dotenv": "^16.4.0",
