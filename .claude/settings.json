@@ -11,6 +11,17 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.harness/hooks/pre-commit-verify.mjs\"",
+            "timeout": 150,
+            "statusMessage": "Running typecheck + tests before commit…"
+          }
+        ]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [
           {
