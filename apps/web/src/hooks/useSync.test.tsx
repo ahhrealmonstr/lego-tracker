@@ -48,6 +48,19 @@ describe('useSync session gating', () => {
     await waitFor(() => expect(result.current.status).toBe('offline'));
     expect(mockReconcile).not.toHaveBeenCalled();
   });
+
+  it('recovers and reconciles when connectivity returns after an offline start', async () => {
+    setOnline(false);
+    const { result } = renderHook(() => useSync(true));
+    await waitFor(() => expect(result.current.status).toBe('offline'));
+    expect(mockReconcile).not.toHaveBeenCalled();
+
+    setOnline(true);
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+    });
+    await waitFor(() => expect(mockReconcile).toHaveBeenCalledTimes(1));
+  });
 });
 
 describe('useSync typed error surfacing (SC7)', () => {

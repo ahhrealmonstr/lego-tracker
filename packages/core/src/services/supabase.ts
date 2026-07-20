@@ -31,29 +31,43 @@ export type SessionResult =
   | { ok: true; userId: string; isAnonymous: boolean }
   | { ok: false; reason: 'offline' | 'anon-disabled' | 'rate-limited' | 'unknown' };
 
+function reasonFromMessage(
+  message: string | undefined,
+  status?: number,
+): 'offline' | 'anon-disabled' | 'rate-limited' | 'unknown' {
+  const msg = (message ?? '').toLowerCase();
+  return (
+    msg.includes('disabled') ? 'anon-disabled'
+    : (status === 429 || msg.includes('rate')) ? 'rate-limited'
+    : msg.includes('fetch') || msg.includes('network') ? 'offline'
+    : 'unknown'
+  );
+}
+
 export async function ensureAnonymousSession(): Promise<SessionResult> {
   const supabase = getClient();
   if (!supabase) return { ok: false, reason: 'offline' };
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) {
-    sessionCache = { userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
-    return { ok: true, userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
-  }
+  // D6 fail-open: no client call (getSession/signInAnonymously) may throw to the
+  // caller — a rejected promise (lock timeout, unexpected error) maps to a typed
+  // reason like every returned error does.
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      sessionCache = { userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
+      return { ok: true, userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
+    }
 
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error || !data.user) {
-    const msg = (error?.message ?? '').toLowerCase();
-    const status = (error as { status?: number } | null)?.status;
-    const reason =
-      msg.includes('disabled') ? 'anon-disabled'
-      : (status === 429 || msg.includes('rate')) ? 'rate-limited'
-      : msg.includes('fetch') || msg.includes('network') ? 'offline'
-      : 'unknown';
-    return { ok: false, reason };
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error || !data.user) {
+      const status = (error as { status?: number } | null)?.status;
+      return { ok: false, reason: reasonFromMessage(error?.message, status) };
+    }
+    sessionCache = { userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
+    return { ok: true, userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
+  } catch (err) {
+    return { ok: false, reason: reasonFromMessage(err instanceof Error ? err.message : undefined) };
   }
-  sessionCache = { userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
-  return { ok: true, userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
 }
 
 export function getSessionSnapshot(): { userId: string | null; isAnonymous: boolean } {

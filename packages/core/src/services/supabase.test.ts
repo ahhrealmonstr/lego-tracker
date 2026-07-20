@@ -164,6 +164,19 @@ describe('Supabase Service', () => {
       });
       expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'unknown' });
     });
+
+    // D6 fail-open: a thrown/rejected client call must never escape to callers.
+    it('fails open to unknown when getSession rejects', async () => {
+      const client = makeMockClient();
+      client.auth.getSession.mockRejectedValueOnce(new Error('lock timeout'));
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'unknown' });
+    });
+
+    it('fails open to offline when signInAnonymously rejects with a network error', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockRejectedValueOnce(new Error('Failed to fetch'));
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'offline' });
+    });
   });
 
   describe('getSessionSnapshot', () => {

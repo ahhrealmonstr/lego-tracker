@@ -33,14 +33,6 @@ export function useSync(sessionReady: boolean): {
   useEffect(() => {
     if (!sessionReady) return;
 
-    if (!navigator.onLine) {
-      setStatus('offline');
-      return;
-    }
-
-    runSync();
-    startInterval();
-
     function handleOnline() {
       setStatus('idle');
       runSync();
@@ -55,8 +47,17 @@ export function useSync(sessionReady: boolean): {
       }
     }
 
+    // Register connectivity listeners unconditionally so a session that starts
+    // offline still recovers (runs its first sync) once the browser comes online.
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    if (navigator.onLine) {
+      runSync();
+      startInterval();
+    } else {
+      setStatus('offline');
+    }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
