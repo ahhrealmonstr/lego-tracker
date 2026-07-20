@@ -24,6 +24,8 @@ export function useAuth(): UseAuth {
   const started = useRef(false);
 
   useEffect(() => {
+    let active = true;
+
     // Reflect account-link returns (magic-link) without importing the client:
     // the same uid flips isAnonymous → false once linking completes (SC5).
     const unsubscribe = onSessionChange(setSnapshot);
@@ -32,13 +34,17 @@ export function useAuth(): UseAuth {
       started.current = true;
       void (async () => {
         const result = await ensureAnonymousSession();
+        if (!active) return; // unmounted mid-bootstrap — skip state updates
         setSnapshot(getSessionSnapshot());
         setSessionReady(true);
         setBackupState(result.ok ? 'backed-up' : 'error'); // fail-open (D6/SC9)
       })();
     }
 
-    return unsubscribe;
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   return {

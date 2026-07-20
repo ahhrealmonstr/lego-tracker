@@ -65,6 +65,31 @@ describe('useAuth', () => {
     expect(result.current.userId).toBe('anon-1');
   });
 
+  it('does not update state after unmount during bootstrap (N2)', async () => {
+    mockSnapshot.mockReturnValue({ userId: 'anon-1', isAnonymous: true });
+    let resolveEnsure!: (v: { ok: true; userId: string; isAnonymous: boolean }) => void;
+    mockEnsure.mockReturnValue(
+      new Promise(res => {
+        resolveEnsure = res;
+      }),
+    );
+
+    const { unmount } = renderHook(() => useAuth());
+
+    // Bootstrap is suspended at `await ensureAnonymousSession()`.
+    const snapshotCallsBeforeUnmount = mockSnapshot.mock.calls.length;
+    unmount();
+
+    // Session resolves AFTER unmount. The post-await block must be gated:
+    // getSessionSnapshot() must not run and no setState may fire.
+    await act(async () => {
+      resolveEnsure({ ok: true, userId: 'anon-1', isAnonymous: true });
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    expect(mockSnapshot.mock.calls.length).toBe(snapshotCallsBeforeUnmount);
+  });
+
   it('unsubscribes from session changes on unmount', async () => {
     mockSnapshot.mockReturnValue({ userId: 'anon-1', isAnonymous: true });
     mockEnsure.mockResolvedValue({ ok: true, userId: 'anon-1', isAnonymous: true });
