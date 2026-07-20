@@ -8,6 +8,7 @@ import {
   isSupabaseConfigured,
   getSetParts,
   cacheSetParts,
+  __resetSupabaseClientForTests,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -27,6 +28,7 @@ function makeMockClient(queryResult: { data: any; error: any } = { data: null, e
     then: (resolve: (v: any) => any) => Promise.resolve(queryResult).then(resolve),
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      onAuthStateChange: vi.fn(),
     },
   };
   (createClient as any).mockReturnValue(client);
@@ -72,9 +74,22 @@ const ownedItem = {
 describe('Supabase Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetSupabaseClientForTests();
     (getConfig as any).mockReturnValue({
       supabaseUrl: 'https://example.supabase.co',
       supabaseAnonKey: 'test-key',
+    });
+  });
+
+  describe('client singleton', () => {
+    it('reuses a single client instance across calls', async () => {
+      makeMockClient();
+      await getCachedItem('set-10305');
+      await getCachedItem('set-10305');
+      expect(createClient).toHaveBeenCalledTimes(1);
+      __resetSupabaseClientForTests();
+      await getCachedItem('set-10305');
+      expect(createClient).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -1,11 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { LegoCatalogItem, LegoItemType, OwnedLegoItem, SyncQueueEntry, SetPart } from '../types/lego';
 import { getConfig } from '../config';
+
+let cachedClient: SupabaseClient | null = null;
+let sessionCache: { userId: string | null; isAnonymous: boolean } = { userId: null, isAnonymous: false };
 
 function getClient() {
   const { supabaseUrl, supabaseAnonKey } = getConfig();
   if (!supabaseUrl || !supabaseAnonKey) return null;
-  return createClient(supabaseUrl, supabaseAnonKey);
+  if (cachedClient) return cachedClient;
+  cachedClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  });
+  cachedClient.auth.onAuthStateChange((_event, session) => {
+    sessionCache = {
+      userId: session?.user?.id ?? null,
+      isAnonymous: session?.user?.is_anonymous ?? false,
+    };
+  });
+  return cachedClient;
+}
+
+// Test-only: clears the singleton so each test starts clean.
+export function __resetSupabaseClientForTests() {
+  cachedClient = null;
+  sessionCache = { userId: null, isAnonymous: false };
 }
 
 function isValidLegoType(type: any): type is LegoItemType {
