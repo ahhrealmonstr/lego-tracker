@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { ensureAnonymousSession, getSessionSnapshot, linkEmailIdentity } from '@lego-tracker/core';
+import {
+  ensureAnonymousSession,
+  getSessionSnapshot,
+  linkEmailIdentity,
+  onSessionChange,
+} from '@lego-tracker/core';
 import type { LinkResult } from '@lego-tracker/core';
 
 export type BackupState = 'initializing' | 'backed-up' | 'backing-up' | 'offline' | 'error';
@@ -19,14 +24,21 @@ export function useAuth(): UseAuth {
   const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    void (async () => {
-      const result = await ensureAnonymousSession();
-      setSnapshot(getSessionSnapshot());
-      setSessionReady(true);
-      setBackupState(result.ok ? 'backed-up' : 'error'); // fail-open (D6/SC9)
-    })();
+    // Reflect account-link returns (magic-link) without importing the client:
+    // the same uid flips isAnonymous → false once linking completes (SC5).
+    const unsubscribe = onSessionChange(setSnapshot);
+
+    if (!started.current) {
+      started.current = true;
+      void (async () => {
+        const result = await ensureAnonymousSession();
+        setSnapshot(getSessionSnapshot());
+        setSessionReady(true);
+        setBackupState(result.ok ? 'backed-up' : 'error'); // fail-open (D6/SC9)
+      })();
+    }
+
+    return unsubscribe;
   }, []);
 
   return {

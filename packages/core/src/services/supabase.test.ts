@@ -12,6 +12,7 @@ import {
   ensureAnonymousSession,
   getSessionSnapshot,
   linkEmailIdentity,
+  onSessionChange,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -224,6 +225,36 @@ describe('Supabase Service', () => {
       const client = makeMockClient();
       client.auth.updateUser.mockResolvedValueOnce({ error: { message: 'boom' } });
       expect(await linkEmailIdentity('user@example.com')).toEqual({ ok: false, reason: 'network' });
+    });
+  });
+
+  describe('onSessionChange', () => {
+    it('returns a no-op unsubscribe when not configured', () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      const unsub = onSessionChange(() => {});
+      expect(typeof unsub).toBe('function');
+      expect(() => unsub()).not.toThrow();
+    });
+
+    it('forwards session snapshots on change and unsubscribes on cleanup', () => {
+      const client = makeMockClient();
+      const unsubscribe = vi.fn();
+      let handler: ((event: string, session: unknown) => void) | undefined;
+      client.auth.onAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+        handler = cb;
+        return { data: { subscription: { unsubscribe } } };
+      });
+
+      const received: Array<{ userId: string | null; isAnonymous: boolean }> = [];
+      const off = onSessionChange((s) => received.push(s));
+
+      // Magic-link return: same uid, now linked (non-anonymous).
+      handler?.('SIGNED_IN', { user: { id: 'anon-1', is_anonymous: false } });
+      expect(received).toEqual([{ userId: 'anon-1', isAnonymous: false }]);
+      expect(getSessionSnapshot()).toEqual({ userId: 'anon-1', isAnonymous: false });
+
+      off();
+      expect(unsubscribe).toHaveBeenCalledTimes(1);
     });
   });
 

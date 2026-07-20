@@ -60,6 +60,27 @@ export function getSessionSnapshot(): { userId: string | null; isAnonymous: bool
   return { ...sessionCache };
 }
 
+/**
+ * Subscribe to auth-session changes (e.g. anonymous → email-linked on magic-link
+ * return). Keeps the module session cache fresh and forwards each snapshot to the
+ * caller so the hook layer never needs to import the client (RR-010). Returns an
+ * unsubscribe; a no-op when Supabase is not configured.
+ */
+export function onSessionChange(
+  cb: (snapshot: { userId: string | null; isAnonymous: boolean }) => void,
+): () => void {
+  const supabase = getClient();
+  if (!supabase) return () => {};
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    sessionCache = {
+      userId: session?.user?.id ?? null,
+      isAnonymous: session?.user?.is_anonymous ?? false,
+    };
+    cb({ ...sessionCache });
+  });
+  return () => data.subscription.unsubscribe();
+}
+
 export type LinkResult =
   | { ok: true }
   | { ok: false; reason: 'email-taken' | 'network' | 'invalid-email' };
