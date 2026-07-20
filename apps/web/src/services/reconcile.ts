@@ -1,6 +1,6 @@
 import { loadCollectionFromCloud, reconcileCollection, syncCollectionToCloud } from '@lego-tracker/core';
 import { loadCollection, saveCollection } from './storage';
-import { clearSyncQueue, loadSyncQueue } from './syncQueue';
+import { loadSyncQueue, removeSyncedEntries } from './syncQueue';
 
 let inFlight: Promise<void> | null = null;
 
@@ -24,5 +24,7 @@ async function doReconcile(): Promise<void> {
 
   const queue = loadSyncQueue();
   await syncCollectionToCloud(queue); // throws on network error — caller handles
-  clearSyncQueue();
+  // Remove only the snapshot we actually sent; a mutation enqueued during the
+  // await above has a different content key and is preserved for the next run.
+  removeSyncedEntries(queue);
 }

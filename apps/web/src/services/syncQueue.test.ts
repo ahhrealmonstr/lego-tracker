@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadSyncQueue, saveSyncQueue, enqueueMutation, clearSyncQueue } from './syncQueue';
+import { loadSyncQueue, saveSyncQueue, enqueueMutation, clearSyncQueue, removeSyncedEntries } from './syncQueue';
 import type { SyncQueueEntry, OwnedLegoItem } from '@lego-tracker/core';
 
 const QUEUE_KEY = 'brick-ledger.sync-queue.v1';
@@ -76,6 +76,53 @@ describe('syncQueue', () => {
       enqueueMutation({ type: 'upsert', item: makeOwnedItem('a') });
       clearSyncQueue();
       expect(loadSyncQueue()).toHaveLength(0);
+    });
+  });
+
+  describe('removeSyncedEntries', () => {
+    it('removes only the entries matching a synced content key', () => {
+      const synced: SyncQueueEntry[] = [
+        { type: 'upsert', item: makeOwnedItem('a', '2024-01-01T00:00:00.000Z') },
+        { type: 'delete', itemId: 'b', deletedAt: '2024-01-03T00:00:00.000Z' },
+      ];
+      saveSyncQueue([...synced, { type: 'upsert', item: makeOwnedItem('c') }]);
+
+      removeSyncedEntries(synced);
+
+      const queue = loadSyncQueue();
+      expect(queue).toHaveLength(1);
+      expect((queue[0] as Extract<SyncQueueEntry, { type: 'upsert' }>).item.id).toBe('c');
+    });
+
+    it('preserves a same-id upsert enqueued after the snapshot (different updatedAt)', () => {
+      const synced: SyncQueueEntry[] = [
+        { type: 'upsert', item: makeOwnedItem('a', '2024-01-01T00:00:00.000Z') },
+      ];
+      // enqueueMutation dedups by id, so storage now holds only the newer entry.
+      saveSyncQueue(synced);
+      enqueueMutation({ type: 'upsert', item: makeOwnedItem('a', '2024-02-02T00:00:00.000Z') });
+
+      removeSyncedEntries(synced);
+
+      const queue = loadSyncQueue();
+      expect(queue).toHaveLength(1);
+      expect((queue[0] as Extract<SyncQueueEntry, { type: 'upsert' }>).item.updatedAt)
+        .toBe('2024-02-02T00:00:00.000Z');
+    });
+
+    it('preserves a same-id delete enqueued after the snapshot (different deletedAt)', () => {
+      const synced: SyncQueueEntry[] = [
+        { type: 'delete', itemId: 'a', deletedAt: '2024-01-01T00:00:00.000Z' },
+      ];
+      saveSyncQueue(synced);
+      enqueueMutation({ type: 'delete', itemId: 'a', deletedAt: '2024-02-02T00:00:00.000Z' });
+
+      removeSyncedEntries(synced);
+
+      const queue = loadSyncQueue();
+      expect(queue).toHaveLength(1);
+      expect((queue[0] as Extract<SyncQueueEntry, { type: 'delete' }>).deletedAt)
+        .toBe('2024-02-02T00:00:00.000Z');
     });
   });
 });
