@@ -2,7 +2,19 @@ import { loadCollectionFromCloud, reconcileCollection, syncCollectionToCloud } f
 import { loadCollection, saveCollection } from './storage';
 import { clearSyncQueue, loadSyncQueue } from './syncQueue';
 
-export async function reconcile(): Promise<void> {
+let inFlight: Promise<void> | null = null;
+
+// Single-flight guard: concurrent triggers (interval + online + manual) await the
+// same run instead of interleaving load/save on the shared localStorage collection.
+export function reconcile(): Promise<void> {
+  if (inFlight) return inFlight;
+  inFlight = doReconcile().finally(() => {
+    inFlight = null;
+  });
+  return inFlight;
+}
+
+async function doReconcile(): Promise<void> {
   const cloudResult = await loadCollectionFromCloud();
   if (!cloudResult) return; // not configured or unauthenticated — no-op
 
