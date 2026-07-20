@@ -7,4 +7,8 @@ describe('core public barrel', () => {
     expect(typeof core.linkEmailIdentity).toBe('function');
     expect(typeof core.getSessionSnapshot).toBe('function');
   });
+
+  it('does not leak the test-only supabase reset helper (N1)', () => {
+    expect('__resetSupabaseClientForTests' in core).toBe(false);
+  });
 });
