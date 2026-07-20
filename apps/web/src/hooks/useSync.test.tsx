@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 vi.mock('../services/reconcile', () => ({
   reconcile: vi.fn(),
@@ -47,5 +47,37 @@ describe('useSync session gating', () => {
     const { result } = renderHook(() => useSync(true));
     await waitFor(() => expect(result.current.status).toBe('offline'));
     expect(mockReconcile).not.toHaveBeenCalled();
+  });
+});
+
+describe('useSync typed error surfacing (SC7)', () => {
+  it('surfaces a distinguishable error reason from the thrown error', async () => {
+    mockReconcile.mockRejectedValueOnce(new Error('rate-limited'));
+    const { result } = renderHook(() => useSync(true));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.errorReason).toBe('rate-limited');
+  });
+
+  it('clears the error reason on a subsequent successful run', async () => {
+    mockReconcile.mockRejectedValueOnce(new Error('rate-limited'));
+    const { result } = renderHook(() => useSync(true));
+    await waitFor(() => expect(result.current.errorReason).toBe('rate-limited'));
+
+    mockReconcile.mockResolvedValueOnce(undefined);
+    await act(async () => {
+      result.current.triggerSync();
+    });
+
+    await waitFor(() => expect(result.current.status).toBe('idle'));
+    expect(result.current.errorReason).toBeNull();
+  });
+
+  it('falls back to "unknown" for a non-Error rejection', async () => {
+    mockReconcile.mockRejectedValueOnce('boom');
+    const { result } = renderHook(() => useSync(true));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.errorReason).toBe('unknown');
   });
 });

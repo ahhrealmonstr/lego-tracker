@@ -4,16 +4,23 @@ import { reconcile } from '../services/reconcile';
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
-export function useSync(sessionReady: boolean): { status: SyncStatus; triggerSync: () => void } {
+export function useSync(sessionReady: boolean): {
+  status: SyncStatus;
+  errorReason: string | null;
+  triggerSync: () => void;
+} {
   const [status, setStatus] = useState<SyncStatus>('idle');
+  const [errorReason, setErrorReason] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const runSync = useCallback(async () => {
     setStatus('syncing');
     try {
       await reconcile();
+      setErrorReason(null);
       setStatus('idle');
-    } catch {
+    } catch (err) {
+      setErrorReason(err instanceof Error ? err.message : 'unknown');
       setStatus('error');
     }
   }, []);
@@ -58,5 +65,5 @@ export function useSync(sessionReady: boolean): { status: SyncStatus; triggerSyn
     };
   }, [sessionReady, runSync, startInterval]);
 
-  return { status, triggerSync: runSync };
+  return { status, errorReason, triggerSync: runSync };
 }
