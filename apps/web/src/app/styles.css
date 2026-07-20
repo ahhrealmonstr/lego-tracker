@@ -291,6 +291,11 @@ h1 {
   color: var(--color-text-muted);
 }
 
+.sync-status--done {
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+}
+
 .sync-status--error {
   background: rgba(201, 47, 47, 0.08);
   color: var(--color-accent);

@@ -217,7 +217,21 @@ export function App() {
         </div>
         {importMessage ? <p className="scan-message">{importMessage}</p> : null}
 
-        <SyncStatus status={syncStatus} onRetry={triggerSync} />
+        <SyncStatus
+          backupState={
+            syncStatus === 'syncing'
+              ? 'backing-up'
+              : syncStatus === 'offline'
+                ? 'offline'
+                : syncStatus === 'error'
+                  ? 'error'
+                  : backupState
+          }
+          errorReason={null}
+          isAnonymous={isAnonymous}
+          onRetry={triggerSync}
+          onSecure={linkEmail}
+        />
 
         <div className="toolbar">
           <label className="search-box">
