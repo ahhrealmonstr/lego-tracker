@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added (Cloud Backup — anonymous session)
+- Silent anonymous Supabase session on boot — cloud backup now works with zero login friction
+- Optional "Secure my backup" email magic-link upgrade that preserves the same `uid` and data
+- `ensureAnonymousSession`, `linkEmailIdentity`, `getSessionSnapshot`, `onSessionChange` auth wrappers in core, exposed via the public barrel
+- `useAuth` web hook bootstrapping the session and tracking backup state
+- Single-flight guard on `reconcile()` so concurrent triggers run exactly once
+- Honest backup status UI: `backing-up → backed-up`, offline, and a distinguishable error state with a reason and Retry
+- `enable_anonymous_sign_ins = true` in `supabase/config.toml`
+
+### Changed
+- Memoized the Supabase client as a singleton with a session cache
+- `useSync` gates its first run on session readiness and surfaces a typed error reason instead of a blanket "Sync failed"
+
 ## 0.1.0 — 2026-06-18
 
 ### Added (M6 — Missing Parts)
