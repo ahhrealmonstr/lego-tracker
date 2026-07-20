@@ -11,12 +11,13 @@ Record results in the table at the bottom.
 ## Part A — One-time hosted setup (prerequisites)
 
 - [ ] **A1. Enable anonymous sign-ins.** Supabase Dashboard → **Authentication → Sign In / Providers → Anonymous sign-ins → ON**. (Matches `supabase/config.toml:171` `enable_anonymous_sign_ins = true`.)
-- [ ] **A2. Configure redirect URLs for magic-link return.** Dashboard → **Authentication → URL Configuration**:
-  - **Site URL**: the app origin you'll test from (e.g. `http://localhost:5173`).
-  - **Redirect allow-list**: add that same origin (the app calls `linkEmailIdentity` with `emailRedirectTo = window.location.origin`, so the origin must be allow-listed or the magic link is rejected).
+- [ ] **A2. Configure redirect URLs for magic-link return.** Dashboard → **Authentication → URL Configuration**. The app calls `linkEmailIdentity` with `emailRedirectTo = window.location.origin`, so **every origin you use must be allow-listed** or the magic link is rejected — allow-list both:
+  - **Local**: `http://localhost:5173`.
+  - **Deployed app origin** (the Netlify production URL) — set it as the **Site URL** and add it to the **redirect allow-list**. Easy to forget: verifying on localhost passes while production silently rejects the magic link.
 - [ ] **A3. Email delivery.** For SC5 you need a magic-link email to actually arrive. Either configure **custom SMTP** (Dashboard → Authentication → Emails/SMTP), or use the built-in email (low rate limits — fine for one test). Confirm you can receive at the test address.
 - [ ] **A4. Confirm RLS is present** (should already be, no change needed): Dashboard → **Database → Policies** → `user_collection` has `USING (auth.uid() = user_id)`.
-- [ ] **A5. Local env.** In `apps/web`, ensure `.env` has `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` pointing at this project. Start the app: `npm run web:dev` (Vite, default `http://localhost:5173`). Open **DevTools → Console + Application/Storage** and keep the **Supabase Dashboard → SQL Editor** handy.
+- [ ] **A5. Local env.** In `apps/web`, ensure `.env` has `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` pointing at this project (no `.env` exists yet — create one). Start the app: `npm run web:dev` (Vite, default `http://localhost:5173`). Open **DevTools → Console + Application/Storage** and keep the **Supabase Dashboard → SQL Editor** handy.
+- [ ] **A6. Deploy env (for production, not just local verification).** The same `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` must be set in the **deploy environment** (Netlify build settings) — they are baked in at build time, so a deploy missing them ships a non-functional backup. Confirm they're present in the Netlify site's environment variables and trigger a rebuild if you add them.
 
 > Handy SQL (SQL Editor): recent collection rows —
 > `select user_id, count(*) from user_collection group by user_id order by 2 desc;`
