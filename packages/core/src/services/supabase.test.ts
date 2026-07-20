@@ -9,6 +9,7 @@ import {
   getSetParts,
   cacheSetParts,
   __resetSupabaseClientForTests,
+  ensureAnonymousSession,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -29,6 +30,8 @@ function makeMockClient(queryResult: { data: any; error: any } = { data: null, e
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
       onAuthStateChange: vi.fn(),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      signInAnonymously: vi.fn(),
     },
   };
   (createClient as any).mockReturnValue(client);
@@ -90,6 +93,72 @@ describe('Supabase Service', () => {
       __resetSupabaseClientForTests();
       await getCachedItem('set-10305');
       expect(createClient).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('ensureAnonymousSession', () => {
+    it('returns offline reason and skips createClient when not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'offline' });
+      expect(createClient).not.toHaveBeenCalled();
+    });
+
+    it('creates an anon session when none exists', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: { id: 'anon-1', is_anonymous: true } },
+        error: null,
+      });
+      const result = await ensureAnonymousSession();
+      expect(result).toEqual({ ok: true, userId: 'anon-1', isAnonymous: true });
+      expect(client.auth.signInAnonymously).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns the existing session without calling signInAnonymously', async () => {
+      const client = makeMockClient();
+      client.auth.getSession.mockResolvedValueOnce({
+        data: { session: { user: { id: 'user-9', is_anonymous: false } } },
+        error: null,
+      });
+      const result = await ensureAnonymousSession();
+      expect(result).toEqual({ ok: true, userId: 'user-9', isAnonymous: false });
+      expect(client.auth.signInAnonymously).not.toHaveBeenCalled();
+    });
+
+    it('maps a disabled error to anon-disabled', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'Anonymous sign-ins are disabled' },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'anon-disabled' });
+    });
+
+    it('maps a 429 status to rate-limited', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'too many requests', status: 429 },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'rate-limited' });
+    });
+
+    it('maps a network error to offline', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'Failed to fetch' },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'offline' });
+    });
+
+    it('maps an unrecognized error to unknown', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'something weird happened' },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'unknown' });
     });
   });
 

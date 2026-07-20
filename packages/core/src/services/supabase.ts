@@ -27,6 +27,35 @@ export function __resetSupabaseClientForTests() {
   sessionCache = { userId: null, isAnonymous: false };
 }
 
+export type SessionResult =
+  | { ok: true; userId: string; isAnonymous: boolean }
+  | { ok: false; reason: 'offline' | 'anon-disabled' | 'rate-limited' | 'unknown' };
+
+export async function ensureAnonymousSession(): Promise<SessionResult> {
+  const supabase = getClient();
+  if (!supabase) return { ok: false, reason: 'offline' };
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) {
+    sessionCache = { userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
+    return { ok: true, userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
+  }
+
+  const { data, error } = await supabase.auth.signInAnonymously();
+  if (error || !data.user) {
+    const msg = (error?.message ?? '').toLowerCase();
+    const status = (error as { status?: number } | null)?.status;
+    const reason =
+      msg.includes('disabled') ? 'anon-disabled'
+      : (status === 429 || msg.includes('rate')) ? 'rate-limited'
+      : msg.includes('fetch') || msg.includes('network') ? 'offline'
+      : 'unknown';
+    return { ok: false, reason };
+  }
+  sessionCache = { userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
+  return { ok: true, userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
+}
+
 function isValidLegoType(type: any): type is LegoItemType {
   return type === 'set' || type === 'minifig';
 }
