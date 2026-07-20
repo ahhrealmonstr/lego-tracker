@@ -37,6 +37,7 @@ import { DetailPanel } from '../components/DetailPanel';
 import { Stat } from '../components/Stat';
 import { SyncStatus } from '../components/SyncStatus';
 import { useSync } from '../hooks/useSync';
+import { useAuth } from '../hooks/useAuth';
 
 // Initialize core config
 setConfig({
@@ -65,8 +66,9 @@ export function App() {
   const [importMessage, setImportMessage] = useState('');
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  // T9 bridge: session gating wired via useAuth in T10.
-  const { status: syncStatus, triggerSync } = useSync(true);
+  // Retain backupState/isAnonymous/linkEmail for the SyncStatus wiring in T16.
+  const { sessionReady, backupState, isAnonymous, linkEmail } = useAuth();
+  const { status: syncStatus, triggerSync } = useSync(sessionReady);
 
   useEffect(() => {
     saveCollection(items);
