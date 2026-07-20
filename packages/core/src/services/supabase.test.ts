@@ -197,7 +197,21 @@ describe('Supabase Service', () => {
       const client = makeMockClient();
       const result = await linkEmailIdentity('user@example.com');
       expect(result).toEqual({ ok: true });
-      expect(client.auth.updateUser).toHaveBeenCalledWith({ email: 'user@example.com' });
+      expect(client.auth.updateUser).toHaveBeenCalledWith({ email: 'user@example.com' }, undefined);
+    });
+
+    it('sends the magic link back to the app origin when in a browser', async () => {
+      const client = makeMockClient();
+      vi.stubGlobal('window', { location: { origin: 'https://app.example.com' } });
+      try {
+        await linkEmailIdentity('user@example.com');
+        expect(client.auth.updateUser).toHaveBeenCalledWith(
+          { email: 'user@example.com' },
+          { emailRedirectTo: 'https://app.example.com' },
+        );
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
 
     it('maps an already-registered error to email-taken', async () => {

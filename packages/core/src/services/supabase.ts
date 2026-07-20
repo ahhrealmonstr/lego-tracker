@@ -71,7 +71,11 @@ export async function linkEmailIdentity(email: string): Promise<LinkResult> {
   const supabase = getClient();
   if (!supabase) return { ok: false, reason: 'network' };
 
-  const { error } = await supabase.auth.updateUser({ email });
+  // Route the magic-link confirmation back to the running app so the
+  // returning session can complete the account link (see onSessionChange).
+  const options =
+    typeof window !== 'undefined' ? { emailRedirectTo: window.location.origin } : undefined;
+  const { error } = await supabase.auth.updateUser({ email }, options);
   if (error) {
     const msg = (error.message ?? '').toLowerCase();
     if (msg.includes('registered') || msg.includes('taken') || msg.includes('exists')) {

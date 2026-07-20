@@ -309,6 +309,37 @@ h1 {
   padding: 0 10px;
 }
 
+.secure-backup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 11px;
+}
+
+.secure-backup__toggle {
+  color: var(--color-text-muted);
+}
+
+.secure-backup input {
+  flex: 1;
+  min-width: 140px;
+  min-height: 26px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.secure-backup--sent {
+  color: var(--color-text-muted);
+}
+
+.secure-backup__error {
+  color: var(--color-accent);
+  width: 100%;
+  margin: 0;
+}
+
 /* ─── Search ──────────────────────────────────────────── */
 
 .search-box {

@@ -5,6 +5,12 @@ import { SyncStatus } from './SyncStatus';
 const noop = () => {};
 const noopSecure = async () => ({ ok: true });
 
+async function revealAndSubmit(email: string) {
+  fireEvent.click(screen.getByTestId('secure-backup-toggle'));
+  fireEvent.change(screen.getByTestId('secure-backup-email'), { target: { value: email } });
+  fireEvent.click(screen.getByTestId('secure-backup-submit'));
+}
+
 describe('SyncStatus (backup status)', () => {
   it('renders nothing while initializing', () => {
     const { container } = render(
@@ -74,5 +80,62 @@ describe('SyncStatus (backup status)', () => {
     expect(screen.getByText(/rate-limited/)).toBeInTheDocument();
     fireEvent.click(retry);
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('SyncStatus (Secure my backup)', () => {
+  it('hides the affordance for a linked (non-anonymous) account', () => {
+    render(
+      <SyncStatus
+        backupState="backed-up"
+        isAnonymous={false}
+        onRetry={noop}
+        onSecure={noopSecure}
+      />,
+    );
+    expect(screen.queryByTestId('secure-backup-toggle')).not.toBeInTheDocument();
+  });
+
+  it('shows the affordance for an anonymous account', () => {
+    render(
+      <SyncStatus
+        backupState="backed-up"
+        isAnonymous
+        onRetry={noop}
+        onSecure={noopSecure}
+      />,
+    );
+    expect(screen.getByTestId('secure-backup-toggle')).toBeInTheDocument();
+  });
+
+  it('submits a valid email to onSecure and confirms via email', async () => {
+    const onSecure = vi.fn().mockResolvedValue({ ok: true });
+    render(
+      <SyncStatus
+        backupState="backed-up"
+        isAnonymous
+        onRetry={noop}
+        onSecure={onSecure}
+      />,
+    );
+    await revealAndSubmit('user@example.com');
+    expect(onSecure).toHaveBeenCalledWith('user@example.com');
+    expect(
+      await screen.findByText('Check your email to finish securing your backup'),
+    ).toBeInTheDocument();
+  });
+
+  it('surfaces an email-taken failure reason', async () => {
+    const onSecure = vi.fn().mockResolvedValue({ ok: false, reason: 'email-taken' });
+    render(
+      <SyncStatus
+        backupState="backed-up"
+        isAnonymous
+        onRetry={noop}
+        onSecure={onSecure}
+      />,
+    );
+    await revealAndSubmit('taken@example.com');
+    expect(await screen.findByText(/already registered/i)).toBeInTheDocument();
   });
 });
