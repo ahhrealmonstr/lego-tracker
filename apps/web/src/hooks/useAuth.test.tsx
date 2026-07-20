@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import React from 'react';
 
 vi.mock('@lego-tracker/core', () => ({
   ensureAnonymousSession: vi.fn(),
@@ -88,6 +89,21 @@ describe('useAuth', () => {
     });
 
     expect(mockSnapshot.mock.calls.length).toBe(snapshotCallsBeforeUnmount);
+  });
+
+  it('reaches sessionReady under StrictMode mount/cleanup/remount (N2 regression)', async () => {
+    mockSnapshot.mockReturnValue({ userId: 'anon-1', isAnonymous: true });
+    mockEnsure.mockResolvedValue({ ok: true, userId: 'anon-1', isAnonymous: true });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => <React.StrictMode>{children}</React.StrictMode>,
+    });
+
+    // StrictMode double-invokes the effect (mount → cleanup → remount) on the
+    // same instance; the `started` ref must not let the mount-guard strand the
+    // single bootstrap. sessionReady must still flip true.
+    await waitFor(() => expect(result.current.sessionReady).toBe(true));
+    expect(result.current.backupState).toBe('backed-up');
   });
 
   it('unsubscribes from session changes on unmount', async () => {
