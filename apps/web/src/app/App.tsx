@@ -66,9 +66,19 @@ export function App() {
   const [importMessage, setImportMessage] = useState('');
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  // Retain backupState/isAnonymous/linkEmail for the SyncStatus wiring in T16.
   const { sessionReady, backupState, isAnonymous, linkEmail } = useAuth();
-  const { status: syncStatus, triggerSync } = useSync(sessionReady);
+  const { status: syncStatus, errorReason, triggerSync } = useSync(sessionReady);
+
+  // A live sync in progress/failed/offline takes precedence over the resting
+  // backup state from useAuth; otherwise fall through to the session's state.
+  const derivedBackupState =
+    syncStatus === 'syncing'
+      ? 'backing-up'
+      : syncStatus === 'error'
+        ? 'error'
+        : syncStatus === 'offline'
+          ? 'offline'
+          : backupState;
 
   useEffect(() => {
     saveCollection(items);
@@ -218,16 +228,8 @@ export function App() {
         {importMessage ? <p className="scan-message">{importMessage}</p> : null}
 
         <SyncStatus
-          backupState={
-            syncStatus === 'syncing'
-              ? 'backing-up'
-              : syncStatus === 'offline'
-                ? 'offline'
-                : syncStatus === 'error'
-                  ? 'error'
-                  : backupState
-          }
-          errorReason={null}
+          backupState={derivedBackupState}
+          errorReason={errorReason}
           isAnonymous={isAnonymous}
           onRetry={triggerSync}
           onSecure={linkEmail}
