@@ -11,6 +11,7 @@ import {
   __resetSupabaseClientForTests,
   ensureAnonymousSession,
   getSessionSnapshot,
+  linkEmailIdentity,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -33,6 +34,7 @@ function makeMockClient(queryResult: { data: any; error: any } = { data: null, e
       onAuthStateChange: vi.fn(),
       getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
       signInAnonymously: vi.fn(),
+      updateUser: vi.fn().mockResolvedValue({ error: null }),
     },
   };
   (createClient as any).mockReturnValue(client);
@@ -177,6 +179,37 @@ describe('Supabase Service', () => {
       });
       await ensureAnonymousSession();
       expect(getSessionSnapshot()).toEqual({ userId: 'anon-1', isAnonymous: true });
+    });
+  });
+
+  describe('linkEmailIdentity', () => {
+    it('rejects an invalid email without calling createClient', async () => {
+      expect(await linkEmailIdentity('not-an-email')).toEqual({ ok: false, reason: 'invalid-email' });
+      expect(createClient).not.toHaveBeenCalled();
+    });
+
+    it('returns network reason when not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      expect(await linkEmailIdentity('user@example.com')).toEqual({ ok: false, reason: 'network' });
+    });
+
+    it('updates the user email and returns ok on success', async () => {
+      const client = makeMockClient();
+      const result = await linkEmailIdentity('user@example.com');
+      expect(result).toEqual({ ok: true });
+      expect(client.auth.updateUser).toHaveBeenCalledWith({ email: 'user@example.com' });
+    });
+
+    it('maps an already-registered error to email-taken', async () => {
+      const client = makeMockClient();
+      client.auth.updateUser.mockResolvedValueOnce({ error: { message: 'Email already registered' } });
+      expect(await linkEmailIdentity('user@example.com')).toEqual({ ok: false, reason: 'email-taken' });
+    });
+
+    it('maps other errors to network', async () => {
+      const client = makeMockClient();
+      client.auth.updateUser.mockResolvedValueOnce({ error: { message: 'boom' } });
+      expect(await linkEmailIdentity('user@example.com')).toEqual({ ok: false, reason: 'network' });
     });
   });
 

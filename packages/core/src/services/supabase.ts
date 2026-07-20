@@ -60,6 +60,28 @@ export function getSessionSnapshot(): { userId: string | null; isAnonymous: bool
   return { ...sessionCache };
 }
 
+export type LinkResult =
+  | { ok: true }
+  | { ok: false; reason: 'email-taken' | 'network' | 'invalid-email' };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function linkEmailIdentity(email: string): Promise<LinkResult> {
+  if (!EMAIL_RE.test(email)) return { ok: false, reason: 'invalid-email' };
+  const supabase = getClient();
+  if (!supabase) return { ok: false, reason: 'network' };
+
+  const { error } = await supabase.auth.updateUser({ email });
+  if (error) {
+    const msg = (error.message ?? '').toLowerCase();
+    if (msg.includes('registered') || msg.includes('taken') || msg.includes('exists')) {
+      return { ok: false, reason: 'email-taken' };
+    }
+    return { ok: false, reason: 'network' };
+  }
+  return { ok: true };
+}
+
 function isValidLegoType(type: any): type is LegoItemType {
   return type === 'set' || type === 'minifig';
 }
