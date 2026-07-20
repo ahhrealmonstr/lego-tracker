@@ -65,7 +65,8 @@ export function App() {
   const [importMessage, setImportMessage] = useState('');
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  const { status: syncStatus, triggerSync } = useSync();
+  // T9 bridge: session gating wired via useAuth in T10.
+  const { status: syncStatus, triggerSync } = useSync(true);
 
   useEffect(() => {
     saveCollection(items);

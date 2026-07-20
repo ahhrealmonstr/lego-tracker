@@ -4,7 +4,7 @@ import { reconcile } from '../services/reconcile';
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
-export function useSync(): { status: SyncStatus; triggerSync: () => void } {
+export function useSync(sessionReady: boolean): { status: SyncStatus; triggerSync: () => void } {
   const [status, setStatus] = useState<SyncStatus>('idle');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -24,6 +24,8 @@ export function useSync(): { status: SyncStatus; triggerSync: () => void } {
   }, [runSync]);
 
   useEffect(() => {
+    if (!sessionReady) return;
+
     if (!navigator.onLine) {
       setStatus('offline');
       return;
@@ -54,7 +56,7 @@ export function useSync(): { status: SyncStatus; triggerSync: () => void } {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [runSync, startInterval]);
+  }, [sessionReady, runSync, startInterval]);
 
   return { status, triggerSync: runSync };
 }
