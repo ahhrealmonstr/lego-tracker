@@ -30,3 +30,5 @@ webhook-queue.sqlite
 webhook-queue.sqlite-wal
 webhook-queue.sqlite-shm
 maintenance/
+state.events.jsonl
+state.snapshot.json

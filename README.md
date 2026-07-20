@@ -39,6 +39,13 @@ npm test             # all tests (150 core + 27 web)
 npm run typecheck    # TypeScript across all packages
 ```
 
+## Hosted Supabase Setup (Cloud Backup)
+
+Cloud backup runs on an **anonymous** Supabase session by default (zero login friction), with an optional email magic-link upgrade to secure the backup. Two settings must be configured on the **hosted** Supabase project before backup and account-linking work in production:
+
+1. **Enable anonymous sign-ins.** In the Supabase dashboard under **Authentication → Sign In / Providers**, turn on **Allow anonymous sign-ins** (equivalent to `enable_anonymous_sign_ins = true` in the local `supabase/config.toml`). Without this, `ensureAnonymousSession()` fails and the app runs local-only with `backupState === 'error'`.
+2. **Configure the auth redirect URL.** Under **Authentication → URL Configuration**, add the deployed app URL to **Redirect URLs** so the magic link returns to a page the app handles. On return the client detects the session in the URL and completes account-linking, flipping `isAnonymous` to `false` while preserving the same `uid`.
+
 ## Normal Usage Example
 
 1. Start the app with `npm run web:dev`.

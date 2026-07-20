@@ -37,6 +37,7 @@ import { DetailPanel } from '../components/DetailPanel';
 import { Stat } from '../components/Stat';
 import { SyncStatus } from '../components/SyncStatus';
 import { useSync } from '../hooks/useSync';
+import { useAuth } from '../hooks/useAuth';
 
 // Initialize core config
 setConfig({
@@ -65,7 +66,19 @@ export function App() {
   const [importMessage, setImportMessage] = useState('');
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  const { status: syncStatus, triggerSync } = useSync();
+  const { sessionReady, backupState, isAnonymous, linkEmail } = useAuth();
+  const { status: syncStatus, errorReason, triggerSync } = useSync(sessionReady);
+
+  // A live sync in progress/failed/offline takes precedence over the resting
+  // backup state from useAuth; otherwise fall through to the session's state.
+  const derivedBackupState =
+    syncStatus === 'syncing'
+      ? 'backing-up'
+      : syncStatus === 'error'
+        ? 'error'
+        : syncStatus === 'offline'
+          ? 'offline'
+          : backupState;
 
   useEffect(() => {
     saveCollection(items);
@@ -214,7 +227,13 @@ export function App() {
         </div>
         {importMessage ? <p className="scan-message">{importMessage}</p> : null}
 
-        <SyncStatus status={syncStatus} onRetry={triggerSync} />
+        <SyncStatus
+          backupState={derivedBackupState}
+          errorReason={errorReason}
+          isAnonymous={isAnonymous}
+          onRetry={triggerSync}
+          onSecure={linkEmail}
+        />
 
         <div className="toolbar">
           <label className="search-box">

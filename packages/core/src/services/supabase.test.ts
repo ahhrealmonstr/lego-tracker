@@ -8,6 +8,11 @@ import {
   isSupabaseConfigured,
   getSetParts,
   cacheSetParts,
+  __resetSupabaseClientForTests,
+  ensureAnonymousSession,
+  getSessionSnapshot,
+  linkEmailIdentity,
+  onSessionChange,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -27,6 +32,10 @@ function makeMockClient(queryResult: { data: any; error: any } = { data: null, e
     then: (resolve: (v: any) => any) => Promise.resolve(queryResult).then(resolve),
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      onAuthStateChange: vi.fn(),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      signInAnonymously: vi.fn(),
+      updateUser: vi.fn().mockResolvedValue({ error: null }),
     },
   };
   (createClient as any).mockReturnValue(client);
@@ -72,9 +81,193 @@ const ownedItem = {
 describe('Supabase Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetSupabaseClientForTests();
     (getConfig as any).mockReturnValue({
       supabaseUrl: 'https://example.supabase.co',
       supabaseAnonKey: 'test-key',
+    });
+  });
+
+  describe('client singleton', () => {
+    it('reuses a single client instance across calls', async () => {
+      makeMockClient();
+      await getCachedItem('set-10305');
+      await getCachedItem('set-10305');
+      expect(createClient).toHaveBeenCalledTimes(1);
+      __resetSupabaseClientForTests();
+      await getCachedItem('set-10305');
+      expect(createClient).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('ensureAnonymousSession', () => {
+    it('returns offline reason and skips createClient when not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'offline' });
+      expect(createClient).not.toHaveBeenCalled();
+    });
+
+    it('creates an anon session when none exists', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: { id: 'anon-1', is_anonymous: true } },
+        error: null,
+      });
+      const result = await ensureAnonymousSession();
+      expect(result).toEqual({ ok: true, userId: 'anon-1', isAnonymous: true });
+      expect(client.auth.signInAnonymously).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns the existing session without calling signInAnonymously', async () => {
+      const client = makeMockClient();
+      client.auth.getSession.mockResolvedValueOnce({
+        data: { session: { user: { id: 'user-9', is_anonymous: false } } },
+        error: null,
+      });
+      const result = await ensureAnonymousSession();
+      expect(result).toEqual({ ok: true, userId: 'user-9', isAnonymous: false });
+      expect(client.auth.signInAnonymously).not.toHaveBeenCalled();
+    });
+
+    it('maps a disabled error to anon-disabled', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'Anonymous sign-ins are disabled' },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'anon-disabled' });
+    });
+
+    it('maps a 429 status to rate-limited', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'too many requests', status: 429 },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'rate-limited' });
+    });
+
+    it('maps a network error to offline', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'Failed to fetch' },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'offline' });
+    });
+
+    it('maps an unrecognized error to unknown', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: null },
+        error: { message: 'something weird happened' },
+      });
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'unknown' });
+    });
+
+    // D6 fail-open: a thrown/rejected client call must never escape to callers.
+    it('fails open to unknown when getSession rejects', async () => {
+      const client = makeMockClient();
+      client.auth.getSession.mockRejectedValueOnce(new Error('lock timeout'));
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'unknown' });
+    });
+
+    it('fails open to offline when signInAnonymously rejects with a network error', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockRejectedValueOnce(new Error('Failed to fetch'));
+      expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'offline' });
+    });
+  });
+
+  describe('getSessionSnapshot', () => {
+    it('returns an empty snapshot after reset', () => {
+      __resetSupabaseClientForTests();
+      expect(getSessionSnapshot()).toEqual({ userId: null, isAnonymous: false });
+    });
+
+    it('reflects the session after a successful ensureAnonymousSession', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: { id: 'anon-1', is_anonymous: true } },
+        error: null,
+      });
+      await ensureAnonymousSession();
+      expect(getSessionSnapshot()).toEqual({ userId: 'anon-1', isAnonymous: true });
+    });
+  });
+
+  describe('linkEmailIdentity', () => {
+    it('rejects an invalid email without calling createClient', async () => {
+      expect(await linkEmailIdentity('not-an-email')).toEqual({ ok: false, reason: 'invalid-email' });
+      expect(createClient).not.toHaveBeenCalled();
+    });
+
+    it('returns network reason when not configured', async () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      expect(await linkEmailIdentity('user@example.com')).toEqual({ ok: false, reason: 'network' });
+    });
+
+    it('updates the user email and returns ok on success', async () => {
+      const client = makeMockClient();
+      const result = await linkEmailIdentity('user@example.com');
+      expect(result).toEqual({ ok: true });
+      expect(client.auth.updateUser).toHaveBeenCalledWith({ email: 'user@example.com' }, undefined);
+    });
+
+    it('sends the magic link back to the app origin when in a browser', async () => {
+      const client = makeMockClient();
+      vi.stubGlobal('window', { location: { origin: 'https://app.example.com' } });
+      try {
+        await linkEmailIdentity('user@example.com');
+        expect(client.auth.updateUser).toHaveBeenCalledWith(
+          { email: 'user@example.com' },
+          { emailRedirectTo: 'https://app.example.com' },
+        );
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('maps an already-registered error to email-taken', async () => {
+      const client = makeMockClient();
+      client.auth.updateUser.mockResolvedValueOnce({ error: { message: 'Email already registered' } });
+      expect(await linkEmailIdentity('user@example.com')).toEqual({ ok: false, reason: 'email-taken' });
+    });
+
+    it('maps other errors to network', async () => {
+      const client = makeMockClient();
+      client.auth.updateUser.mockResolvedValueOnce({ error: { message: 'boom' } });
+      expect(await linkEmailIdentity('user@example.com')).toEqual({ ok: false, reason: 'network' });
+    });
+  });
+
+  describe('onSessionChange', () => {
+    it('returns a no-op unsubscribe when not configured', () => {
+      (getConfig as any).mockReturnValue({ supabaseUrl: null, supabaseAnonKey: null });
+      const unsub = onSessionChange(() => {});
+      expect(typeof unsub).toBe('function');
+      expect(() => unsub()).not.toThrow();
+    });
+
+    it('forwards session snapshots on change and unsubscribes on cleanup', () => {
+      const client = makeMockClient();
+      const unsubscribe = vi.fn();
+      let handler: ((event: string, session: unknown) => void) | undefined;
+      client.auth.onAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+        handler = cb;
+        return { data: { subscription: { unsubscribe } } };
+      });
+
+      const received: Array<{ userId: string | null; isAnonymous: boolean }> = [];
+      const off = onSessionChange((s) => received.push(s));
+
+      // Magic-link return: same uid, now linked (non-anonymous).
+      handler?.('SIGNED_IN', { user: { id: 'anon-1', is_anonymous: false } });
+      expect(received).toEqual([{ userId: 'anon-1', isAnonymous: false }]);
+      expect(getSessionSnapshot()).toEqual({ userId: 'anon-1', isAnonymous: false });
+
+      off();
+      expect(unsubscribe).toHaveBeenCalledTimes(1);
     });
   });
 

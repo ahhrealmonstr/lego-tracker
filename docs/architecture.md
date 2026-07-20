@@ -72,6 +72,31 @@ sequenceDiagram
   UI->>Supabase: syncCollectionToCloud() (queued, every 5m)
 ```
 
+## Authentication & Cloud Backup
+
+Auth and session responsibility live in the **core services layer** — `packages/core/src/services/supabase.ts` — not in the web app. This keeps the domain/services boundary intact and avoids widening the known `catalog.ts` violation (decision **D5**).
+
+### Core auth wrappers
+
+| Function | Responsibility |
+| --- | --- |
+| `ensureAnonymousSession()` | Idempotent boot call: resumes an existing session or silently creates an anonymous one. Fails **open** — on error returns a typed `SessionResult` failure so callers keep working local-only. |
+| `linkEmailIdentity(email)` | Promotes the current anonymous user to an email (magic-link) identity, preserving the same `uid` and all cloud rows. Returns a typed `LinkResult`. |
+| `getSessionSnapshot()` | Synchronous read of the module-level session cache (`{ userId, isAnonymous }`) — lets the hook layer reflect state without importing the client. |
+| `onSessionChange(cb)` | Subscribes to auth-state changes (used to reflect a magic-link return) and returns an unsubscribe function. |
+
+These are the **only** auth surface the web app may touch, and it reaches them exclusively through the core public barrel (`@lego-tracker/core`) via the `apps/web/src/hooks/useAuth.ts` hook — never through a deep import. This is the RR-010 boundary in practice.
+
+### Anonymous-backup + account-linking model
+
+- On boot the web app calls `ensureAnonymousSession()` once. The default experience has **zero login friction**: an anonymous Supabase session is created and cloud backup begins immediately against `user_collection` (RLS-scoped by `auth.uid()`).
+- The anonymous session token lives in `localStorage`, so a full site-data wipe orphans the cloud data. Linking an email identity (`linkEmailIdentity`) is the **optional** upgrade that protects the backup against total loss. Linking preserves the `uid`, so existing rows carry over with no data movement — no schema migration.
+- When anonymous sign-in fails (offline, anon sign-ins disabled, or the per-IP rate cap), the app **fails open**: it stays fully usable local-only and surfaces `backupState === 'error'` (decision D6).
+
+### Session-cache client
+
+`getClient()` returns a **memoized singleton** Supabase client (previously a fresh client per call). A module-level session cache is kept fresh by an `onAuthStateChange` subscription, which backs the synchronous `getSessionSnapshot()`. Core tests reset this singleton via `__resetSupabaseClientForTests()` in `beforeEach`.
+
 ## Data Model
 
 `LegoCatalogItem` — catalog data:

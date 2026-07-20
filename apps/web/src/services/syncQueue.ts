@@ -31,3 +31,21 @@ export function enqueueMutation(entry: SyncQueueEntry): void {
 export function clearSyncQueue(): void {
   localStorage.removeItem(QUEUE_KEY);
 }
+
+// Content key identifies a specific mutation snapshot, not just an item id.
+// A mutation made for the same item DURING a sync produces a different timestamp
+// and therefore a different content key, so it survives removeSyncedEntries.
+function contentKey(entry: SyncQueueEntry): string {
+  return entry.type === 'upsert'
+    ? `${entry.item.id}|${entry.item.updatedAt}`
+    : `${entry.itemId}|${entry.deletedAt}`;
+}
+
+// Remove only the entries that were actually synced (matched by content key),
+// re-reading the CURRENT queue so mutations enqueued during the in-flight sync
+// are preserved rather than wiped by a blanket clear.
+export function removeSyncedEntries(synced: SyncQueueEntry[]): void {
+  const syncedKeys = new Set(synced.map(contentKey));
+  const current = loadSyncQueue();
+  saveSyncQueue(current.filter(e => !syncedKeys.has(contentKey(e))));
+}

@@ -1,11 +1,124 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { LegoCatalogItem, LegoItemType, OwnedLegoItem, SyncQueueEntry, SetPart } from '../types/lego';
 import { getConfig } from '../config';
+
+let cachedClient: SupabaseClient | null = null;
+let sessionCache: { userId: string | null; isAnonymous: boolean } = { userId: null, isAnonymous: false };
 
 function getClient() {
   const { supabaseUrl, supabaseAnonKey } = getConfig();
   if (!supabaseUrl || !supabaseAnonKey) return null;
-  return createClient(supabaseUrl, supabaseAnonKey);
+  if (cachedClient) return cachedClient;
+  cachedClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  });
+  cachedClient.auth.onAuthStateChange((_event, session) => {
+    sessionCache = {
+      userId: session?.user?.id ?? null,
+      isAnonymous: session?.user?.is_anonymous ?? false,
+    };
+  });
+  return cachedClient;
+}
+
+// Test-only: clears the singleton so each test starts clean.
+export function __resetSupabaseClientForTests() {
+  cachedClient = null;
+  sessionCache = { userId: null, isAnonymous: false };
+}
+
+export type SessionResult =
+  | { ok: true; userId: string; isAnonymous: boolean }
+  | { ok: false; reason: 'offline' | 'anon-disabled' | 'rate-limited' | 'unknown' };
+
+function reasonFromMessage(
+  message: string | undefined,
+  status?: number,
+): 'offline' | 'anon-disabled' | 'rate-limited' | 'unknown' {
+  const msg = (message ?? '').toLowerCase();
+  return (
+    msg.includes('disabled') ? 'anon-disabled'
+    : (status === 429 || msg.includes('rate')) ? 'rate-limited'
+    : msg.includes('fetch') || msg.includes('network') ? 'offline'
+    : 'unknown'
+  );
+}
+
+export async function ensureAnonymousSession(): Promise<SessionResult> {
+  const supabase = getClient();
+  if (!supabase) return { ok: false, reason: 'offline' };
+
+  // D6 fail-open: no client call (getSession/signInAnonymously) may throw to the
+  // caller — a rejected promise (lock timeout, unexpected error) maps to a typed
+  // reason like every returned error does.
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      sessionCache = { userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
+      return { ok: true, userId: session.user.id, isAnonymous: session.user.is_anonymous ?? false };
+    }
+
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error || !data.user) {
+      const status = (error as { status?: number } | null)?.status;
+      return { ok: false, reason: reasonFromMessage(error?.message, status) };
+    }
+    sessionCache = { userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
+    return { ok: true, userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
+  } catch (err) {
+    return { ok: false, reason: reasonFromMessage(err instanceof Error ? err.message : undefined) };
+  }
+}
+
+export function getSessionSnapshot(): { userId: string | null; isAnonymous: boolean } {
+  return { ...sessionCache };
+}
+
+/**
+ * Subscribe to auth-session changes (e.g. anonymous → email-linked on magic-link
+ * return). Keeps the module session cache fresh and forwards each snapshot to the
+ * caller so the hook layer never needs to import the client (RR-010). Returns an
+ * unsubscribe; a no-op when Supabase is not configured.
+ */
+export function onSessionChange(
+  cb: (snapshot: { userId: string | null; isAnonymous: boolean }) => void,
+): () => void {
+  const supabase = getClient();
+  if (!supabase) return () => {};
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    sessionCache = {
+      userId: session?.user?.id ?? null,
+      isAnonymous: session?.user?.is_anonymous ?? false,
+    };
+    cb({ ...sessionCache });
+  });
+  return () => data.subscription.unsubscribe();
+}
+
+export type LinkResult =
+  | { ok: true }
+  | { ok: false; reason: 'email-taken' | 'network' | 'invalid-email' };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function linkEmailIdentity(email: string): Promise<LinkResult> {
+  if (!EMAIL_RE.test(email)) return { ok: false, reason: 'invalid-email' };
+  const supabase = getClient();
+  if (!supabase) return { ok: false, reason: 'network' };
+
+  // Route the magic-link confirmation back to the running app so the
+  // returning session can complete the account link (see onSessionChange).
+  const options =
+    typeof window !== 'undefined' ? { emailRedirectTo: window.location.origin } : undefined;
+  const { error } = await supabase.auth.updateUser({ email }, options);
+  if (error) {
+    const msg = (error.message ?? '').toLowerCase();
+    if (msg.includes('registered') || msg.includes('taken') || msg.includes('exists')) {
+      return { ok: false, reason: 'email-taken' };
+    }
+    return { ok: false, reason: 'network' };
+  }
+  return { ok: true };
 }
 
 function isValidLegoType(type: any): type is LegoItemType {
