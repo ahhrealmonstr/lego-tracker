@@ -56,6 +56,10 @@ export async function ensureAnonymousSession(): Promise<SessionResult> {
   return { ok: true, userId: data.user.id, isAnonymous: data.user.is_anonymous ?? true };
 }
 
+export function getSessionSnapshot(): { userId: string | null; isAnonymous: boolean } {
+  return { ...sessionCache };
+}
+
 function isValidLegoType(type: any): type is LegoItemType {
   return type === 'set' || type === 'minifig';
 }

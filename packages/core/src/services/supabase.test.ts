@@ -10,6 +10,7 @@ import {
   cacheSetParts,
   __resetSupabaseClientForTests,
   ensureAnonymousSession,
+  getSessionSnapshot,
 } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from '../config';
@@ -159,6 +160,23 @@ describe('Supabase Service', () => {
         error: { message: 'something weird happened' },
       });
       expect(await ensureAnonymousSession()).toEqual({ ok: false, reason: 'unknown' });
+    });
+  });
+
+  describe('getSessionSnapshot', () => {
+    it('returns an empty snapshot after reset', () => {
+      __resetSupabaseClientForTests();
+      expect(getSessionSnapshot()).toEqual({ userId: null, isAnonymous: false });
+    });
+
+    it('reflects the session after a successful ensureAnonymousSession', async () => {
+      const client = makeMockClient();
+      client.auth.signInAnonymously.mockResolvedValueOnce({
+        data: { user: { id: 'anon-1', is_anonymous: true } },
+        error: null,
+      });
+      await ensureAnonymousSession();
+      expect(getSessionSnapshot()).toEqual({ userId: 'anon-1', isAnonymous: true });
     });
   });
 
