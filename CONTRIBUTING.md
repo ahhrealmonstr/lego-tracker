@@ -3,7 +3,7 @@
 ## Development Setup
 
 ```bash
-git clone https://github.com/bri-stevenski/lego-tracker.git
+git clone https://github.com/ahhrealmonstr/lego-tracker.git
 cd lego-tracker
 npm install
 cp .env.example .env   # fill in VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, VITE_REBRICKABLE_API_KEY

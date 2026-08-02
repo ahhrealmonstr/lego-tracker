@@ -24,7 +24,7 @@ M1–M6 complete. Cloud sync via Supabase is live — collection data persists a
 Prerequisites: Node.js 20+, npm, a [Supabase](https://supabase.com) project, a [Rebrickable API key](https://rebrickable.com/api/).
 
 ```bash
-git clone https://github.com/bri-stevenski/lego-tracker.git
+git clone https://github.com/ahhrealmonstr/lego-tracker.git
 cd lego-tracker
 npm install
 cp .env.example .env   # fill in VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, VITE_REBRICKABLE_API_KEY
