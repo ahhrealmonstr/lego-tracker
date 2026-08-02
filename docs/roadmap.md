@@ -53,7 +53,15 @@ belong on this roadmap.
 - **Summary**: Integrated Rebrickable API and Supabase-backed catalog caching. Barcode lookup now chains seed catalog → Supabase cache → Rebrickable with auto-caching and full UI feedback. Bulk CSV seed pipeline seeds 27k sets with resolved theme names on demand.
 - **Status**: done
 - **Milestone**: M2
-- **Track**: Collection & provenance data model
+- **Track**: Export & missing-parts interoperability — the *ingest* side of
+  LEGO-ecosystem interop, the same track M5/M6 export into. Previously tagged to
+  the provenance track, which was too generous: this delivers *external set
+  metadata* (part numbers, colours, themes), not the *user-specific* provenance
+  STRATEGY.md calls for. Provenance itself is not unshipped — `acquiredQuality`,
+  `savedBox`, `buildStatus`, `displayLocation`, and `quantity` have been in
+  `user_collection` since the initial schema — but it arrived incidentally rather
+  than as a deliberate initiative, and has never been deepened. See the
+  Collection & Provenance Data Model section.
 - **Tasks**:
   - [x] Integrate external catalog API (e.g., Rebrickable)
   - [x] Implement catalog caching/mirroring in Supabase
@@ -159,7 +167,7 @@ belong on this roadmap.
 - **Status**: in-progress
 - **Milestone**: M8
 - **Track**: Web platform stabilization
-- **Spec**: _not yet written_
+- **Spec**: *not yet written*
 - **Tasks**:
   - [ ] Land cloud-backup in production — close out issue #14 (see M7 blockers)
   - [ ] Resolve architecture drift — `docs/architecture.md` calls `domain/catalog.ts → services/*` a "Known violation" while `harness.config.json` explicitly allows it; either amend the doc or revert the config and extract a `CatalogService`
@@ -170,11 +178,21 @@ belong on this roadmap.
 
 ## Collection & Provenance Data Model
 
-- **Summary**: Deepen per-set metadata — purchase condition and completeness, storage location, box/instructions state, assembled-vs-bagged, trending value — as the spine the backlog, resale, and display workflows run on. This is the differentiating bet in STRATEGY.md.
-- **Status**: backlog
+- **Summary**: Deepen per-set metadata — purchase condition and completeness, storage location, box/instructions state, assembled-vs-bagged — as the spine the backlog, resale, and display workflows run on. This is the differentiating bet in STRATEGY.md.
+- **Status**: planned
+- **Milestone**: M9
 - **Track**: Collection & provenance data model
+- **Spec**: docs/changes/provenance-data-model/proposal.md
 - **Tasks**:
-  - [ ] Shape the provenance fields and their migration (no spec yet)
+  - [ ] Types + domain logic — condition axes, sealed-implies-complete invariant
+  - [ ] v1→v2 migration transform, tested against fixtures before anything writes v2
+  - [ ] Schema + RLS — `storage_locations`, `collection_events`, purchase columns
+  - [ ] Storage layer — versioned key, retained `v1`, expiry
+  - [ ] Sync — location upserts, event append, `schemaVersion` gate
+  - [ ] UI — axis inputs, location picker, purchase fields
+  - [ ] ADRs 0002 (hybrid over event sourcing) and 0003 (content-keyed identity)
+  - [ ] Trending value moved to a fast-follow — needs an external price feed, out of scope
+        for the data model itself
 
 ## Build Lifecycle & Backlog
 

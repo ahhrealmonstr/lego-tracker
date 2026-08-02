@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+#
+# pre-commit — gate commits on typecheck + tests.
+#
+# Installed via `core.hooksPath` (see `npm run hooks:install`), so this file is
+# version-controlled and survives a fresh clone — unlike anything dropped in
+# .git/hooks.
+#
+# SCOPE CAVEAT: these checks run against the WORKING TREE, not the staged index.
+# A partially-staged commit is validated against what is on disk, which may differ
+# from what actually gets committed. Closing that gap properly needs
+# `git stash --keep-index`, whose failure modes inside a hook are worse than the
+# gap itself. Do not read a green result as "the committed tree passes".
+#
+# Bypass with `git commit --no-verify`.
+#
+# Exit 0 = allow the commit, exit 1 = block it.
+
+set -uo pipefail
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+[ -n "$repo_root" ] || exit 1
+cd "$repo_root" || exit 1
+
+# No --diff-filter here, deliberately. An earlier revision used --diff-filter=ACMR,
+# which excludes deletions (D) and typechanges (T) — so `git rm src/foo.ts` staged
+# nothing the hook could see and the gate never ran, despite deleting a module
+# being one of the most reliable ways to break a typecheck.
+# --no-renames keeps both sides of a rename visible, so `git mv src/x.ts docs/x.md`
+# cannot masquerade as a docs-only change by reporting only its destination.
+staged=$(git diff --cached --name-only --no-renames)
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+# Docs-only commits skip the gate: markdown cannot break typecheck or tests.
+# `.txt` is deliberately excluded from this list — test fixtures are commonly .txt
+# and must gate. LICENSE matches at any depth, not just the repo root.
+if ! printf '%s\n' "$staged" | grep -qvE '\.md$|(^|/)LICENSE$'; then
+  echo "🐢 pre-commit: docs-only change — skipping typecheck + tests."
+  exit 0
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "🍕 pre-commit: npm not found on PATH."
+  echo "   GUI git clients often do not inherit a version manager's PATH."
+  echo "   Bypass with: git commit --no-verify"
+  exit 1
+fi
+
+# Enough lines for a tsc error block, short enough to read in a terminal.
+readonly OUTPUT_TAIL_LINES=30
+
+failed=()
+
+run_check() {
+  local label=$1
+  shift
+  printf '🐢 pre-commit: %s… ' "$label"
+  local output
+  if output=$("$@" 2>&1); then
+    echo "ok"
+  else
+    echo "FAILED"
+    printf '%s\n' "$output" | tail -"$OUTPUT_TAIL_LINES"
+    failed+=("$label")
+  fi
+}
+
+run_check "typecheck" npm run typecheck
+run_check "tests" npm test
+
+if [ ${#failed[@]} -gt 0 ]; then
+  echo
+  echo "🍕 Hold the pizza — ${failed[*]} failed. Commit blocked."
+  echo "   Fix the errors above, or bypass with: git commit --no-verify"
+  exit 1
+fi
+
+echo "🐢 Cowabunga — checks passed."
+exit 0
