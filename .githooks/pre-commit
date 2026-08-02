@@ -6,26 +6,50 @@
 # version-controlled and survives a fresh clone — unlike anything dropped in
 # .git/hooks.
 #
-# Bypass with `git commit --no-verify` when you genuinely need to (WIP commits
-# on a throwaway branch, docs-only fixups mid-rebase).
+# SCOPE CAVEAT: these checks run against the WORKING TREE, not the staged index.
+# A partially-staged commit is validated against what is on disk, which may differ
+# from what actually gets committed. Closing that gap properly needs
+# `git stash --keep-index`, whose failure modes inside a hook are worse than the
+# gap itself. Do not read a green result as "the committed tree passes".
+#
+# Bypass with `git commit --no-verify`.
 #
 # Exit 0 = allow the commit, exit 1 = block it.
 
 set -uo pipefail
 
-# Docs-only commits do not need a typecheck or a test run. If every staged path
-# is markdown or a licence/text file, skip the gate entirely.
-staged=$(git diff --cached --name-only --diff-filter=ACMR)
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+[ -n "$repo_root" ] || exit 1
+cd "$repo_root" || exit 1
+
+# No --diff-filter here, deliberately. An earlier revision used --diff-filter=ACMR,
+# which excludes deletions (D) and typechanges (T) — so `git rm src/foo.ts` staged
+# nothing the hook could see and the gate never ran, despite deleting a module
+# being one of the most reliable ways to break a typecheck.
+# --no-renames keeps both sides of a rename visible, so `git mv src/x.ts docs/x.md`
+# cannot masquerade as a docs-only change by reporting only its destination.
+staged=$(git diff --cached --name-only --no-renames)
 if [ -z "$staged" ]; then
   exit 0
 fi
-if ! printf '%s\n' "$staged" | grep -qvE '\.(md|txt)$|^LICENSE$'; then
+
+# Docs-only commits skip the gate: markdown cannot break typecheck or tests.
+# `.txt` is deliberately excluded from this list — test fixtures are commonly .txt
+# and must gate. LICENSE matches at any depth, not just the repo root.
+if ! printf '%s\n' "$staged" | grep -qvE '\.md$|(^|/)LICENSE$'; then
   echo "🐢 pre-commit: docs-only change — skipping typecheck + tests."
   exit 0
 fi
 
-repo_root=$(git rev-parse --show-toplevel)
-cd "$repo_root" || exit 1
+if ! command -v npm >/dev/null 2>&1; then
+  echo "🍕 pre-commit: npm not found on PATH."
+  echo "   GUI git clients often do not inherit a version manager's PATH."
+  echo "   Bypass with: git commit --no-verify"
+  exit 1
+fi
+
+# Enough lines for a tsc error block, short enough to read in a terminal.
+readonly OUTPUT_TAIL_LINES=30
 
 failed=()
 
@@ -38,8 +62,7 @@ run_check() {
     echo "ok"
   else
     echo "FAILED"
-    # Only the tail is useful; the full run is reproducible with the same command.
-    printf '%s\n' "$output" | tail -30
+    printf '%s\n' "$output" | tail -"$OUTPUT_TAIL_LINES"
     failed+=("$label")
   fi
 }

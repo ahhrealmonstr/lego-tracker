@@ -35,7 +35,7 @@ Open `http://localhost:5173/`.
 
 ```bash
 npm run web:build    # production build
-npm test             # all tests (150 core + 27 web)
+npm test             # all tests (198 core + 57 web)
 npm run typecheck    # TypeScript across all packages
 ```
 
