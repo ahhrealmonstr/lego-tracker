@@ -13,7 +13,9 @@
     "web:build": "npm run build -w apps/web",
     "lint:md": "markdownlint \"*.md\" \"docs/**/*.md\"",
     "supabase:init": "supabase init",
-    "seed-catalog": "tsx scripts/seed-catalog.ts"
+    "seed-catalog": "tsx scripts/seed-catalog.ts",
+    "hooks:install": "git config core.hooksPath .githooks && echo 'git hooks installed from .githooks/'",
+    "prepare": "git rev-parse --git-dir > /dev/null 2>&1 && git config core.hooksPath .githooks || true"
   },
   "overrides": {
     "react": "18.3.1"
