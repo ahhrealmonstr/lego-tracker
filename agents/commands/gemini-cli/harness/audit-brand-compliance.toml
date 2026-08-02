@@ -16,7 +16,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-brand-compliance/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-brand-compliance/SKILL.md) ---
 # Audit Brand Compliance
 
 > Rule-based brand-semantics audit. Detects (a) tokens used in forbidden contexts per their `$extensions.harness.brand.forbidden_contexts` metadata (BRAND-T001) and (b) UI copy containing phrases listed in `DESIGN.md ## Brand Rules → voice.forbidden_phrases` (BRAND-V001). The 4th composed verifier in `harness check-design`, alongside audit-component-anatomy, design-craft critique, and detect-design-drift.
@@ -208,7 +208,7 @@ BRAND-V001 [warn] src/Cta.tsx:1 — UI copy contains forbidden phrase "click her
 - Cross-cutting: extracts `Verifier<F>` interface at `packages/cli/src/shared/verifier.ts` (deferred until 4th data point — this is it)
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-brand-compliance/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-brand-compliance/skill.yaml) ---
 name: audit-brand-compliance
 version: "0.1.0"
 description: Rule-based brand-semantics audit. Detects token misuse (BRAND-T001 via $extensions.harness.brand.forbidden_contexts) and voice violations (BRAND-V001 via DESIGN.md voice.forbidden_phrases). 4th composed verifier in harness check-design. Triggers extraction of the formal verifier interface.

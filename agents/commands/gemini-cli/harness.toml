@@ -16,7 +16,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-router/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-router/SKILL.md) ---
 # Harness Router
 
 > Natural language entry point to all harness skills. Classifies intent by scope/domain, confirms routing with reasoning, dispatches to the appropriate skill.
@@ -173,7 +173,7 @@ Could be refactoring, dead code, or architecture cleanup → Present candidates:
 - **Intent outside harness catalog:** Say so plainly: "This doesn't match any harness skill. Handle directly, or re-describe if you think a skill should apply."
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-router/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-router/skill.yaml) ---
 name: harness-router
 version: "1.0.0"
 description: Natural language router to harness skills — classifies intent, confirms, dispatches

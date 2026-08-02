@@ -32,11 +32,12 @@ belong on this roadmap.
   - [x] Complete `AGENTS.md` for Harness validation
   - [x] Initialize `docs/roadmap.md`
 
-## Oracle Test Persona Integration
+## Canary Test Persona Integration
 
-- **Summary**: Install Oracle as a Claude Code plugin with four test personas
-  (test-author, test-reviewer, framework-advisor, flake-hunter). Document usage
-  in AGENTS.md. No CLI or CI gate in this iteration.
+- **Summary**: Install the test-persona plugin and document usage in AGENTS.md. No
+  CLI or CI gate in this iteration. Shipped as **Oracle** with four personas; the
+  plugin was later renamed **Canary** and moved to `bop-clocktower/canary`, and the
+  references were migrated 2026-08-02 (issue #6).
 - **Status**: done
 - **Milestone**: M1
 - **Track**: Web platform stabilization
@@ -45,10 +46,12 @@ belong on this roadmap.
   never existed"; it did, but was stranded on an unmerged branch when PR #7 was
   squash-merged, and was recovered 2026-08-02.
 - **Tasks**:
-  - [x] Install Oracle plugin via Claude Code marketplace
-  - [x] Add Oracle section to AGENTS.md
+  - [x] Install plugin via Claude Code marketplace
+  - [x] Add persona section to AGENTS.md
   - [x] Smoke test all four personas
-  - [ ] Migrate Oracle personas → Canary (issue #6)
+  - [x] Migrate Oracle → Canary references (issue #6) — marketplace URL, install
+        command, and persona names updated; `agents/` regenerated from the harness
+        template, which had already been corrected upstream
 
 ## Catalog Expansion
 

@@ -53,10 +53,20 @@ If personas are not available, run:
 
 ```text
 /plugin marketplace add https://github.com/bop-clocktower/canary
-/plugin install canary
+/plugin install canary@bop-clocktower
 ```
 
 Then `/reload-plugins` to apply.
+
+To check what you are running, or to pick up a newer release:
+
+```text
+/plugin marketplace update bop-clocktower
+/plugin install canary@bop-clocktower
+```
+
+The marketplace and the installed plugin version independently — updating the
+marketplace alone leaves the old version installed, so run both.
 
 ### Personas
 

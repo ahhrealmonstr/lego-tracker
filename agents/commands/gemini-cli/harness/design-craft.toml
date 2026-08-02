@@ -16,7 +16,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-design-craft/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-design-craft/SKILL.md) ---
 # Harness Design Craft
 
 > LLM-judgment-based design ceiling-raiser. Three branchable phases — CRITIQUE finds what's mediocre, POLISH applies high-craft moves, BENCHMARK scores against curated exemplars. The ceiling counterpart to harness-design (declared-intent enforcement, rule-based) and the design-pipeline floor audits.
@@ -231,7 +231,7 @@ CRAFT-B001 EmptyState component scored against Linear empty list exemplar
 - Prior-art references: `docs/changes/design-pipeline/REFERENCES.md` tier-1 entries #2, #3, #4 (impeccable, emil-design-eng, huashu-design)
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-design-craft/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-design-craft/skill.yaml) ---
 name: harness-design-craft
 version: "0.1.0"
 description: LLM-judgment-based design ceiling-raiser. CRITIQUE finds what's mediocre, POLISH applies high-craft moves, BENCHMARK scores against curated exemplars. The ceiling counterpart to rule-based audit skills.

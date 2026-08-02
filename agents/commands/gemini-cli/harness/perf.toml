@@ -17,7 +17,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-perf/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-perf/SKILL.md) ---
 # Harness Perf
 
 > Performance enforcement and benchmark management. Tier-based gates block commits and merges based on complexity, coupling, and runtime regression severity.
@@ -293,7 +293,7 @@ Phase 4: ENFORCE
 - **When a violation is a false positive:** Document it with a `// perf-ignore: <reason>` comment and add the exception to `.harness/perf/exceptions.json`.
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-perf/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-perf/skill.yaml) ---
 name: harness-perf
 version: "1.0.0"
 description: Performance enforcement and benchmark management

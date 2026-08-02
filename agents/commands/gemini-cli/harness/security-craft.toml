@@ -17,7 +17,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/security-craft/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/security-craft/SKILL.md) ---
 # Security Craft
 
 > LLM-judgment critique of security posture for TS/JS source — the ceiling counterpart to `harness-security-scan` (CVE/OWASP rule-based floor) and `harness-security-reviewer` (procedural review). Threat-modeling-as-skill rather than pattern-matching. Critiques whether trust boundaries are respected, where implicit privilege escalation lurks, whether the code defends in depth or just at the gate, whether principle of least authority is honored. Sixth non-design member of the craft-pipeline initiative (#10 of 10; the final sub-project). Emits 3-axis findings (tier × impact × confidence per ADR 0019).
@@ -225,7 +225,7 @@ The 12 files were scanned for signals but skipped because none had security-rele
 - Future: `align-security` (FIX side; aggressive safeguards), IaC critique, multi-file auth-flow tracing, test-file security, framework expansions (tRPC / Convex / Cloudflare Workers / Hono RPC).
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/security-craft/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/security-craft/skill.yaml) ---
 name: security-craft
 version: "0.1.0"
 description: LLM-judgment critique of security posture (TS/JS source). Threat-modeling-as-skill — critiques whether trust boundaries are respected, where implicit privilege escalation lurks, whether the code defends in depth, whether least authority is honored. AST-driven signal detection fires only on files with security-relevant constructs; conservative confidence defaults manage the FP risk inherent in judgment-based security. Sixth non-design craft-pipeline ceiling skill (the final sub-project, #10 of 10).

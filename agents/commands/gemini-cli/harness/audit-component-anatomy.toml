@@ -16,7 +16,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-component-anatomy/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-component-anatomy/SKILL.md) ---
 # Audit Component Anatomy
 
 > Detect missing required anatomy parts in component definitions and missing-anatomy-component patterns in composition. First programmatic enforcer of component-anatomy rules — finds what design-component-anatomy reference content prescribes.
@@ -200,7 +200,7 @@ The `ANAT-D000` info code surfaces JSDoc-vs-convention divergence so authors can
 - Roadmap entry: `design-pipeline sub-project #2` in `docs/roadmap.md`
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-component-anatomy/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/audit-component-anatomy/skill.yaml) ---
 name: audit-component-anatomy
 version: "0.1.0"
 description: Audit component definitions for missing required anatomy parts (slots, states, sizes) and detect missing-anatomy-component patterns (data without empty states, async without loading boundaries). First programmatic enforcer of component-anatomy rules.

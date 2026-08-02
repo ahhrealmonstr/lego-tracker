@@ -20,8 +20,8 @@ Detect documentation that has drifted from code
 </objective>
 
 <execution_context>
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-doc-drift/SKILL.md
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-doc-drift/skill.yaml
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-doc-drift/SKILL.md
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-doc-drift/skill.yaml
 </execution_context>
 
 <process>

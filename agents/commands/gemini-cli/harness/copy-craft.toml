@@ -16,7 +16,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/copy-craft/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/copy-craft/SKILL.md) ---
 # Copy Craft
 
 > LLM-judgment critique of prose-in-code across six surfaces: error messages, log lines, CLI output strings, commit subjects, PR descriptions, and code comments. Primary domain is error messages (universally bad in most codebases). Third member of the craft-pipeline initiative. NO rule-based floor exists — pure ceiling. Emits 3-axis findings (tier × impact × confidence per ADR 0019).
@@ -211,7 +211,7 @@ Skipped surfaces:
 - Future: `align-copy` (FIX side, v2), docs-craft (#2, prose docs), test-craft (#3), code-craft (#4)
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/copy-craft/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/copy-craft/skill.yaml) ---
 name: copy-craft
 version: "0.1.0"
 description: LLM-judgment critique of prose-in-code across six surfaces (error messages, log lines, CLI output, commit subjects, PR descriptions, code comments). Third craft-pipeline ceiling skill; primary domain is error messages (universally bad). Graceful degradation when git/gh prerequisites are absent.

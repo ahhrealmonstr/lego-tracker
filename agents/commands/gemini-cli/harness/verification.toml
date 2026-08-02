@@ -16,7 +16,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-verification/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-verification/SKILL.md) ---
 # Harness Verification
 
 > 3-level evidence-based verification. No completion claims without fresh evidence. "Should work" is not evidence.
@@ -193,19 +193,16 @@ Use severity markers for critical findings: `**[CRITICAL]**` for blocking issues
 
 ### Verification Sign-Off
 
-After producing the report, request acceptance:
+After producing the report, request acceptance in plain text. Ask in plain text in your reply — do NOT route this through `emit_interaction`, `AskUserQuestion`, or any tool. `emit_interaction` records the prompt but does not display it to the human (the client collapses the call to "Called harness" and the rendered text only returns to the model); `AskUserQuestion` is Claude-Code-only and caps headers at 12 chars / 4 options. Plain text in your own message is the only channel that reliably reaches the human across every tool (Claude Code, Cursor, Codex, Gemini CLI). Present it as:
 
-```json
-emit_interaction({
-  path: "<project-root>",
-  type: "confirmation",
-  confirmation: {
-    text: "Verification report: <VERDICT>. Accept and proceed?",
-    context: "<N artifacts checked, N gaps found>",
-    impact: "Accepting proceeds to code review. Declining requires gap resolution.",
-    risk: "<low if PASS, high if gaps remain>"
-  }
-})
+```markdown
+Verification report: <VERDICT>. Accept and proceed?
+
+Context: <N artifacts checked, N gaps found>
+Impact: Accepting proceeds to code review. Declining requires gap resolution.
+Risk: <low if PASS, high if gaps remain>
+
+Proceed? (yes/no)
 ```
 
 ### Handoff and Transition
@@ -417,7 +414,7 @@ All commands must be run fresh. Do not rely on results from previous sessions or
 After verification, append a tagged learning: `YYYY-MM-DD [skill:harness-verification] [outcome:pass/fail]: Verified [feature]. [Brief note.]`
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-verification/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-verification/skill.yaml) ---
 name: harness-verification
 version: "1.0.0"
 description: Comprehensive harness verification of project health and compliance

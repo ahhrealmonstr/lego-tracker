@@ -1,7 +1,7 @@
 ---
 name: harness:code-review
 description: Multi-phase code review pipeline with mechanical checks, graph-scoped context, and parallel review agents
-argument-hint: "[--path <path>] [----comment <--comment>] [----deep <--deep>] [----no-mechanical <--no-mechanical>] [----ci <--ci>] [----fast <--fast>] [----thorough <--thorough>] [--session-slug <session-slug>] [--commit-range <commit-range>]"
+argument-hint: "[--path <path>] [----comment <--comment>] [----deep <--deep>] [----no-mechanical <--no-mechanical>] [----ci <--ci>] [----fast <--fast>] [----thorough <--thorough>] [----depth <--depth>] [--session-slug <session-slug>] [--commit-range <commit-range>]"
 allowed-tools:
   - Bash
   - Read
@@ -22,8 +22,8 @@ Multi-phase code review pipeline with mechanical checks, graph-scoped context, a
 </objective>
 
 <execution_context>
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-code-review/SKILL.md
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-code-review/skill.yaml
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-code-review/SKILL.md
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-code-review/skill.yaml
 </execution_context>
 
 <process>

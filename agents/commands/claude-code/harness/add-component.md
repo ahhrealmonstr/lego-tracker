@@ -22,8 +22,8 @@ Add a component to an existing harness project
 </objective>
 
 <execution_context>
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/add-harness-component/SKILL.md
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/add-harness-component/skill.yaml
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/add-harness-component/SKILL.md
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/add-harness-component/skill.yaml
 </execution_context>
 
 <process>

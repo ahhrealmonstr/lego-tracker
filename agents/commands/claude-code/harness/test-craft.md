@@ -1,6 +1,6 @@
 ---
 name: harness:test-craft
-description: LLM-judgment critique of test quality across vitest / jest / mocha / playwright. Fourth craft-pipeline ceiling skill. Per-test critique with best-effort source pairing for contract-vs-implementation rubrics. Tests are often the worst-written code in a codebase precisely because the rule-based floor is so easy to clear.
+description: LLM-judgment critique of test quality across vitest / jest / mocha / playwright / pytest. Fourth craft-pipeline ceiling skill. Per-test critique with best-effort source pairing for contract-vs-implementation rubrics. Tests are often the worst-written code in a codebase precisely because the rule-based floor is so easy to clear.
 argument-hint: "[--path <path>] [--files <files>] [--frameworks <frameworks>] [--no-source-pair <no-source-pair>]"
 allowed-tools:
   - Bash
@@ -17,7 +17,7 @@ Type: rigid
 </context>
 
 <objective>
-LLM-judgment critique of test quality across vitest / jest / mocha / playwright. Fourth craft-pipeline ceiling skill. Per-test critique with best-effort source pairing for contract-vs-implementation rubrics. Tests are often the worst-written code in a codebase precisely because the rule-based floor is so easy to clear.
+LLM-judgment critique of test quality across vitest / jest / mocha / playwright / pytest. Fourth craft-pipeline ceiling skill. Per-test critique with best-effort source pairing for contract-vs-implementation rubrics. Tests are often the worst-written code in a codebase precisely because the rule-based floor is so easy to clear.
 
 Phases:
 - discover: Glob test files; detect framework per-file via import signatures
@@ -28,8 +28,8 @@ Phases:
 </objective>
 
 <execution_context>
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/test-craft/SKILL.md
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/test-craft/skill.yaml
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/test-craft/SKILL.md
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/test-craft/skill.yaml
 </execution_context>
 
 <process>
