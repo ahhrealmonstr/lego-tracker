@@ -1,7 +1,7 @@
 ---
 name: harness:test-advisor
-description: Graph-based test selection — answers "what tests should I run?"
-argument-hint: "[--path <path>] [--files <files>]"
+description: Graph-based test selection and project-wide coverage audit — answers "what tests should I run?" or "what's untested?"
+argument-hint: "[--path <path>] [--files <files>] [--audit <audit>]"
 allowed-tools:
   - Bash
   - Read
@@ -17,7 +17,7 @@ Type: flexible
 </context>
 
 <objective>
-Graph-based test selection — answers "what tests should I run?"
+Graph-based test selection and project-wide coverage audit — answers "what tests should I run?" or "what's untested?"
 
 Phases:
 - parse: Identify changed files from diff or input
@@ -26,8 +26,8 @@ Phases:
 </objective>
 
 <execution_context>
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-test-advisor/SKILL.md
-@../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-test-advisor/skill.yaml
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-test-advisor/SKILL.md
+@../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-test-advisor/skill.yaml
 </execution_context>
 
 <process>

@@ -11,7 +11,7 @@ Onboard a new developer to a harness-managed project
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-onboarding/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-onboarding/SKILL.md) ---
 # Harness Onboarding
 
 > Navigate an existing harness-managed project and generate a structured orientation for new team members. Map the codebase, understand constraints, identify the adoption level, and produce a summary that gets someone productive fast.
@@ -48,6 +48,8 @@ Onboard a new developer to a harness-managed project
 3. **Read `.harness/learnings.md`** if it exists. This contains hard-won insights from previous sessions — decisions made, gotchas discovered, patterns that worked or failed. Summarize the most recent and most important entries.
 
 4. **Read `.harness/state.json`** if it exists. This reveals what was happening in the last session — current phase, active task, any blockers that were recorded.
+
+5. **Detect the roadmap layout.** If `docs/roadmap.d/` exists the project uses the **sharded** roadmap: per-row shards `docs/roadmap.d/<slug>.md` (plus `_meta.md`) are canonical and `docs/roadmap.md` is a **generated** `merge=ours` aggregate (do not hand-edit it). New contributors must run the one-time per-clone setup so generated-file merges behave: `git config merge.ours.driver true` (the `.gitattributes merge=ours` entry is inert without it — `harness validate` warns clones that have not run it). Surface this in "Getting Started". If only `docs/roadmap.md` exists, the project is monolith; if neither, it is file-less or uninitialized. See the adoption guide `docs/guides/roadmap-sharding.md`.
 
 ### Phase 2: MAP — Understand the Codebase Structure
 
@@ -314,7 +316,7 @@ A mental model for where a team sits on the harness adoption curve. Not prescrip
 Most teams start at Level 1 and move up as they see the value. There is no pressure to reach Level 4 — each level delivers real benefits on its own.
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-onboarding/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-onboarding/skill.yaml) ---
 name: harness-onboarding
 version: "1.0.0"
 description: Onboard a new developer to a harness-managed project

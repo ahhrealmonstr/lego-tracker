@@ -16,7 +16,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-design-drift/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-design-drift/SKILL.md) ---
 # Detect Design Drift
 
 > Detect design-system drift — hardcoded values where tokens exist, and raw HTML primitives where registered components exist. The rule-based floor of design-pipeline #1 (detect half). Reports findings; never modifies source. Pairs with a separate align-design-system fixer skill (deferred to a sibling sub-project).
@@ -158,7 +158,7 @@ DRIFT-T004 [warn] src/legacy.css:3 — Token "color.brand.500" is deprecated and
 - Sibling: `align-design-system` (fix half — deferred to a separate sub-project)
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-design-drift/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/detect-design-drift/skill.yaml) ---
 name: detect-design-drift
 version: "0.1.0"
 description: Detect design-system drift — hardcoded values where tokens exist and raw HTML primitives where registered components exist. Reports only; never modifies source. Floor-layer rule-based verifier composed by harness check-design.

@@ -17,7 +17,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-knowledge-pipeline/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-knowledge-pipeline/SKILL.md) ---
 # Harness Knowledge Pipeline
 
 > 4-phase knowledge extraction, reconciliation, drift detection, and remediation with convergence loop. Keeps the business knowledge graph current and identifies coverage gaps.
@@ -33,6 +33,8 @@ Phases:
 - NOT for graph queries or exploration (use `ask_graph` or `query_graph`)
 
 ## Process
+
+**Prompt the human in plain text** — every confirmation, drift acknowledgement, and contradiction resolution in this skill is plain text only. Do not elevate to `AskUserQuestion`: source labels and finding descriptions routinely exceed its 4-option / 12-char caps, rendering the call as ERR.
 
 1. **EXTRACT:** Run code signal extractors, diagram parsers, BusinessKnowledgeIngestor, and KnowledgeLinker against the project
 2. **RECONCILE:** Build pre-extraction snapshot (current graph state) and post-extraction snapshot, then run StructuralDriftDetector
@@ -309,7 +311,7 @@ $ harness knowledge-pipeline --ci --drift-check
 - **When convergence stalls at iteration 1:** All remaining findings require human intervention. Present them and stop.
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-knowledge-pipeline/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-knowledge-pipeline/skill.yaml) ---
 name: harness-knowledge-pipeline
 version: "1.0.0"
 description: 4-phase knowledge extraction, reconciliation, drift detection, and remediation with convergence loop

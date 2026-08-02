@@ -17,7 +17,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/spec-craft/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/spec-craft/SKILL.md) ---
 # Spec Craft
 
 > LLM-judgment critique of spec quality (proposals + ADRs) against a curated rubric catalog from the spec-quality canon. Per-section critique with rubric-to-section mapping. Second member of the craft-pipeline initiative; highest-leverage craft skill because spec quality compounds across the entire planning → implementation → review lifecycle below it. Emits 3-axis findings (tier × impact × confidence per ADR 0019).
@@ -204,7 +204,7 @@ Summary: 0 findings across 0 docs (0 sections, 7 rubrics, 0 LLM calls, $0.0000, 
 - Future: `align-spec` (FIX side), docs-craft (#2), test-craft (#3), code-craft (#4) — each can call `critiqueSpecFile` if they want spec-level critique for a doc they're already processing.
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/spec-craft/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/spec-craft/skill.yaml) ---
 name: spec-craft
 version: "0.1.0"
 description: LLM-judgment critique of spec quality (proposals + ADRs) against a curated rubric catalog. Per-section critique with rubric-to-section mapping. Second craft-pipeline ceiling skill; highest-leverage because spec quality compounds across the lifecycle below it. Triggered the shared craft infrastructure extraction.

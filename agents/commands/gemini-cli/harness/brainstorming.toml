@@ -17,7 +17,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-brainstorming/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-brainstorming/SKILL.md) ---
 # Harness Brainstorming
 
 > Design exploration to spec to plan. No implementation before design approval. Think first, build second.
@@ -28,7 +28,7 @@ Phases:
 - When the problem space is ambiguous and needs exploration
 - When multiple approaches exist and tradeoffs must be weighed
 - When `on_new_feature` trigger fires and scope is non-trivial
-- NOT when the implementation path is already clear (go straight to harness-planning)
+- NOT when the implementation path is already clear (go straight to harness-planning, or harness-autopilot if the spec already exists)
 - NOT when fixing a bug with an obvious root cause (use harness-debugging or harness-tdd)
 - NOT for simple refactors with no design decisions (use harness-refactoring)
 
@@ -55,7 +55,28 @@ When no arguments are provided (standalone invocation), the skill operates exact
 
 ### Phase 1: EXPLORE -- Gather Context
 
-1. **Load project context.** Call `gather_context({ path: "<project-root>", intent: "<feature description>", skill: "harness-brainstorming", session: "<session-slug-if-known>", include: ["graph", "businessKnowledge", "sessions", "validation"] })`. The `graph` context surfaces `business_fact` nodes relevant to the feature domain. The `businessKnowledge` context loads documented domain knowledge from `docs/knowledge/`. Use both to ground exploration in verified facts rather than assumptions.
+0a. **Read STRATEGY.md if present at repo root (upstream grounding).** Strategy is the durable product anchor that ranks above feature-level context — read it first so the rest of EXPLORE can cross-reference. Call `read_strategy({ path: "<project-root>" })` on the harness MCP server — it returns `{ present, valid, doc?, error? }` and runs validation + parsing inside the server so the project does not need `@harness-engineering/core` installed.
+
+    Fallback for environments without the MCP server (only works when core is resolvable from the project):
+
+    ```bash
+    node -e "import('@harness-engineering/core').then(async m => {
+      const v = await m.validateStrategy(process.cwd());
+      if (!v.ok || !v.value.present) { console.log(JSON.stringify({ grounded: false, reason: 'absent' })); return; }
+      const raw = require('fs').readFileSync('STRATEGY.md', 'utf-8');
+      console.log(JSON.stringify({ grounded: true, doc: m.asStrategyDoc(m.parseStrategyDoc(raw)) }));
+    })"
+    ```
+
+    Three cases:
+
+    - **Absent or invalid:** soft-fail silently. Do not block and do not warn in the spec — the skill works exactly as before when there is no strategic anchor.
+    - **Present and valid:** capture the `Target problem`, `Our approach`, `Who it's for`, and `Tracks` section bodies. Treat them as grounding context alongside `gather_context` outputs. The captured strategy is cited as evidence in step 1's `[evidence]` annotations of the spec output.
+    - **Contradiction with the user's feature description:** do NOT auto-resolve. Carry the contradiction forward as an open question into Phase 2 EVALUATE — surface it explicitly so the human can decide whether to refine the feature or update strategy via `/harness:strategy`.
+
+1. **Load project context.** Call `gather_context({ path: "<project-root>", intent: "<feature description>", skill: "harness-brainstorming", session: "<session-slug-if-known>", include: ["graph", "businessKnowledge", "sessions", "validation"] })`. The `graph` context surfaces `business_fact` nodes relevant to the feature domain. The `businessKnowledge` context loads documented domain knowledge from `docs/knowledge/`. Use both to ground exploration in verified facts rather than assumptions. When `STRATEGY.md` was loaded in step 0a, treat its sections as a higher-tier grounding source than `businessKnowledge` — strategy reflects an explicit human commitment, knowledge is observation.
+   1b. **Consume the PRD when present.** If `docs/product-requirements/<item>/prd.md` exists for this feature/item (authored upstream by the `product-requirements` skill), read it and treat its user stories and EARS acceptance criteria as settled requirements. In Phase 4, seed the spec's `## User Stories` and `## Success Criteria` from them rather than re-deriving criteria the PRD already resolved, and cite the PRD as evidence. When no PRD exists, proceed unchanged — the PRD is an optional richer input, never required.
+
 2. **Read the existing codebase.** Understand architecture, constraints, and conventions. Check AGENTS.md, existing specs in `docs/`, and relevant source files.
 3. **Identify the problem boundary.** What exactly needs solving? What is out of scope? Write both down. Cross-reference `businessKnowledge` domains — if documented business rules constrain the problem, note them.
 4. **Check for prior art.** Has this been partially solved elsewhere? Are there patterns to follow or deliberately break?
@@ -65,28 +86,30 @@ When no arguments are provided (standalone invocation), the skill operates exact
 
 ### Phase 2: EVALUATE -- Ask Questions and Narrow
 
-1. **Ask ONE question at a time.** Ask the most important question first. Wait for the answer. Let it inform the next question. Use `emit_interaction` with `type: 'question'`:
+1. **Ask ONE question at a time, in plain text.** Ask the most important question first. Wait for the answer. Let it inform the next question.
 
-   ```json
-   emit_interaction({
-     path: "<project-root>",
-     type: "question",
-     question: {
-       text: "For auth, which approach should we use?",
-       options: [
-         { "label": "A) Existing JWT middleware", "pros": ["Already in codebase"], "cons": ["No refresh tokens"], "risk": "low", "effort": "low" },
-         { "label": "B) OAuth2 via provider X", "pros": ["Industry standard"], "cons": ["New dependency"], "risk": "medium", "effort": "medium" },
-         { "label": "C) External auth service", "pros": ["Zero maintenance"], "cons": ["Vendor lock-in", "Cost"], "risk": "medium", "effort": "low" }
-       ],
-       recommendation: { "optionIndex": 0, "reason": "Sufficient for current requirements.", "confidence": "high" }
-     }
-   })
+   **Ask directly in your reply. Do NOT route the question through `emit_interaction`, `AskUserQuestion`, or any tool.** `emit_interaction` records the question in state but does not display it to the human — the client collapses it to "Called harness" and the rendered prompt only returns to the model, so the human sees nothing and you end up narrating a question they cannot answer. `AskUserQuestion` is Claude-Code-only and caps headers at 12 chars / 4 options. Plain text in your own message is the only channel that reliably reaches the human across every tool (Claude Code, Cursor, Codex, Gemini CLI).
+
+   Present the question as a markdown table so tradeoffs are scannable, state your recommendation, then STOP and wait for the human's reply:
+
+   ```markdown
+   ### Decision needed: For auth, which approach should we use?
+
+   |            | A) Existing JWT middleware | B) OAuth2 via provider X | C) External auth service |
+   | ---------- | -------------------------- | ------------------------ | ------------------------ |
+   | **Pros**   | Already in codebase        | Industry standard        | Zero maintenance         |
+   | **Cons**   | No refresh tokens          | New dependency           | Vendor lock-in; cost     |
+   | **Risk**   | Low                        | Medium                   | Medium                   |
+   | **Effort** | Low                        | Medium                   | Low                      |
+
+   **Recommendation:** A) Existing JWT middleware (confidence: high) — sufficient for current requirements.
    ```
 
 2. **Prefer multiple choice over open-ended questions.** Give 2-4 concrete options with brief tradeoff notes.
 3. **Acknowledge answers and build on them.** Do not re-ask clarified points. Track decisions as they accumulate.
 4. **Apply YAGNI ruthlessly.** For every proposed capability, ask: "Do we need this for the stated goal, or is this speculative?" If speculative, cut it. If the human insists, note it as a future consideration.
-5. **Continue until you have enough clarity** to propose concrete approaches. Typically 3-7 questions suffice. If you need >10, the scope is too large -- decompose.
+5. **Surface strategy contradictions.** If Phase 1 step 0a captured a contradiction between the feature description and `STRATEGY.md`, ask the human about it explicitly as one of the first few EVALUATE questions. Frame it as a choice — refine the feature to align, or refine strategy via `/harness:strategy` — never auto-resolve. Skip this when STRATEGY.md was absent or no contradiction was detected.
+6. **Continue until you have enough clarity** to propose concrete approaches. Typically 3-7 questions suffice. If you need >10, the scope is too large -- decompose.
 
 ### Context Keywords
 
@@ -129,14 +152,14 @@ These flow into `handoff.json` `contextKeywords` field. Select keywords that hel
    - Decisions made (with rationale from brainstorming)
    - Technical design (data structures, APIs, file layout)
    - Integration points (entry points, registrations, docs, decisions, knowledge impact)
-   - Success criteria (observable, testable outcomes)
+   - Success criteria (observable, testable outcomes) — when a PRD exists at `docs/product-requirements/<item>/prd.md`, seed these from its EARS acceptance criteria (see Phase 1 step 1b)
    - Implementation order (high-level phases, not detailed tasks)
 
    The **Integration Points** section is required in every spec. It defines how the feature connects to the existing system. Populate it with five subsections:
    - **Entry Points** -- Which system entry points does this feature touch or create? (e.g., new CLI command, new MCP tool, new skill, new API route, new barrel export)
    - **Registrations Required** -- What registrations are needed for the feature to be discoverable? (e.g., barrel export regeneration, skill tier assignment, route registration)
    - **Documentation Updates** -- What docs need updating to reflect the new capability? (e.g., AGENTS.md section, API docs, README, guides)
-   - **Architectural Decisions** -- What decisions warrant ADRs? List the decision and a one-line rationale. Only for medium/large tier changes -- omit for small changes.
+   - **Architectural Decisions** -- Which decisions from the **Decisions made** section rise to a standalone ADR? Reference each by name with a one-line note on _why_ it warrants an ADR. Do **not** restate the decisions here -- this subsection points back to the canonical **Decisions made** section; duplicating them creates two sources that drift (spec-craft flags this as SPEC-R004). Only for medium/large tier changes -- "None" for small changes.
    - **Knowledge Impact** -- What domain concepts, patterns, or relationships should enter the knowledge graph?
 
    If the feature is a small change (bug fix, config tweak, < 3 files), the section may contain only Entry Points and Registrations Required with "None" for the others. The section must still be present.
@@ -169,31 +192,51 @@ These flow into `handoff.json` `contextKeywords` field. Select keywords that hel
 
 5. **Run `harness validate`** to verify proper placement and project health.
 
-6. **Request sign-off via `emit_interaction`:**
+6. **Request sign-off in plain text.** Ask directly in your reply — do NOT route the request through `emit_interaction` or `AskUserQuestion` (the human will not see it). Present it as:
 
-   ```json
-   emit_interaction({
-     path: "<project-root>",
-     type: "confirmation",
-     confirmation: {
-       text: "Approve spec at <file-path>?",
-       context: "<one-paragraph summary>",
-       impact: "Spec approval unlocks implementation planning. No code changes yet.",
-       risk: "low"
-     }
-   })
+   ```markdown
+   Approve spec at <file-path>?
+
+   Context: <one-paragraph summary>
+   Impact: Spec approval unlocks implementation planning. No code changes yet.
+   Risk: low
+
+   Proceed? (yes/no)
    ```
 
-   The human must explicitly approve before this skill is complete.
+   The human must explicitly approve (a clear "yes") before this skill is complete.
 
-7. **Add feature to roadmap.** If `docs/roadmap.md` exists:
-   - Derive feature name from the spec title (the H1 heading).
-   - Call `manage_roadmap` with action `add`, `status: "planned"`, `milestone: "Current Work"`, and the spec path.
-   - If the feature already exists, skip silently.
-   - If `manage_roadmap` is unavailable, fall back to `parseRoadmap`/`serializeRoadmap` from core. Warn: "External sync skipped (MCP unavailable). Run `manage_roadmap sync` when MCP is restored."
-   - If no roadmap exists, skip silently.
+7. **Promote the roadmap row.** If a roadmap exists (a `docs/roadmap.md` aggregate **or** a `docs/roadmap.d/` shard directory), transition the named row to `planned` and link the spec in a single structured call (steps 7 and 8 are intentionally ordered so the commit captures the roadmap mutation). Skip silently only when no roadmap exists. In sharded mode `manage_roadmap promote` writes the single row's shard under `docs/roadmap.d/` **and** regenerates the `docs/roadmap.md` aggregate — both are staged in step 8.
+   - Derive the lookup key from the slash-command `ARGUMENTS` string (D1). Derive the summary from the spec title (the H1 heading).
+   - Call `manage_roadmap` with action `promote`, `feature: "<ARGUMENTS>"`, `spec: "docs/changes/<feature>/proposal.md"`, and `summary: "<H1>"`.
+   - Branch on the returned `PromoteResult` envelope:
 
-8. **Write handoff and suggest transition.** After approval:
+     | Envelope                                    | Skill behavior                                                                                                                                                     |
+     | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+     | `ok: true, transitioned: 'backlog→planned'` | Log "Promoted `<feature>`: backlog → planned". Continue to step 8.                                                                                                 |
+     | `ok: true, transitioned: 'spec-updated'`    | Log "Updated spec link for `<feature>` (status preserved)". Continue to step 8.                                                                                    |
+     | `ok: true, transitioned: 'noop'`            | Log "No change — `<feature>` already promoted with this spec". Continue to step 8.                                                                                 |
+     | `ok: false, reason: 'in-progress'`          | **STOP.** Surface: "Refused to promote `<feature>`: an agent is currently dispatched against this row. Stop the agent or use a different feature name."            |
+     | `ok: false, reason: 'done'`                 | **STOP.** Surface: "Refused to promote `<feature>`: row is already 'done'. To revise a shipped feature, use a new name."                                           |
+     | `ok: false, reason: 'not-found'`            | If no row was expected to exist, fall through to a `created` outcome. Otherwise surface `closestMatches` as a typo hint and **STOP**.                              |
+     | `ok: false, reason: 'ambiguous'`            | **STOP.** Surface: "Refused to promote `<feature>`: matches multiple rows across milestones. Re-invoke with one of: `<matches>`." Matches are milestone-qualified. |
+     | `ok: false, reason: 'write-failed'`         | **STOP.** Surface `detail` verbatim. The brainstorm is not considered complete.                                                                                    |
+
+   - The `not-found` create path: when the row genuinely does not exist yet, call `manage_roadmap` action `add` with `status: "planned"`, `milestone: "Current Work"`, the spec path, and the H1 summary (unchanged from the legacy behavior), then continue to step 8.
+   - "STOP" cases skip step 8 (no commit) and step 9 (no handoff/transition). The spec file written in step 3 stays on disk; the user re-runs the skill after resolving the conflict.
+   - If `manage_roadmap` is unavailable, fall back to `parseRoadmap`/`promoteFeature`/`serializeRoadmap` from core. Warn: "External sync skipped (MCP unavailable). Run `manage_roadmap sync` when MCP is restored."
+   - If no roadmap exists, skip silently (no envelope) and continue to step 8; the commit then contains only the spec files.
+
+8. **Commit spec artifacts and roadmap promotion.** After a successful promote (or a silent skip when no roadmap exists), commit the spec, skill recommendations, and the roadmap mutation together so the promotion ships atomically with the spec:
+
+   ```bash
+   git add docs/changes/<feature>/proposal.md docs/changes/<feature>/SKILLS.md docs/roadmap.d/ docs/roadmap.md
+   git commit -m "docs(<feature>): add spec and promote to planned"
+   ```
+
+   Stage the roadmap by mode: **sharded mode** (`docs/roadmap.d/` present) — stage both `docs/roadmap.d/` (the written shard) and the regenerated `docs/roadmap.md` aggregate; **monolith mode** — stage only `docs/roadmap.md`; **no roadmap** — omit both. Do not skip this step — `harness-execution` commits only implementation files, so a spec uncommitted here stays untracked until someone notices. If a pre-commit hook reformats a file, re-add and re-commit.
+
+9. **Write handoff and suggest transition.** After approval:
 
    Write handoff to the session-scoped path when a session slug is known, otherwise fall back to the global path:
    - Session-scoped (preferred): `.harness/sessions/<session-slug>/handoff.json`
@@ -218,14 +261,21 @@ These flow into `handoff.json` `contextKeywords` field. Select keywords that hel
    }
    ```
 
-   Call `emit_interaction`:
+   **Choose the next skill with the human — ask in plain text, not via `emit_interaction`** (a `transition` records the handoff; it does not surface the choice). Present both paths and recommend autopilot:
+
+   > Spec approved. How do you want to build it?
+   >
+   > - **Autopilot (recommended)** — autonomously chains plan → execute → verify → review, pausing only at decision points. Best when the spec's `## Implementation Order` lays out clear phases.
+   > - **Planning** — work the implementation plan interactively before any execution. Choose this when phases are uncertain or you want to drive the breakdown by hand.
+
+   Record the answer as `<next>` (`autopilot` or `planning`), then call `emit_interaction`:
 
    ```json
    {
      "type": "transition",
      "transition": {
        "completedPhase": "brainstorming",
-       "suggestedNext": "planning",
+       "suggestedNext": "<next>",
        "reason": "Spec approved and written to docs/",
        "artifacts": ["<spec path>"],
        "requiresConfirmation": true,
@@ -246,7 +296,10 @@ These flow into `handoff.json` `contextKeywords` field. Select keywords that hel
    }
    ```
 
-   If confirmed: invoke harness-planning with the spec path.
+   If confirmed, dispatch by the recorded choice:
+   - `autopilot` → invoke harness-autopilot with `--spec <spec path>`.
+   - `planning` → invoke harness-planning with the spec path.
+
    If declined: stop. The handoff is written for future invocation.
 
 ---
@@ -312,7 +365,8 @@ Technical claims about existing code, architecture, or tradeoffs MUST cite evide
 1. **File reference:** `file:line` (e.g., `src/services/auth.ts:42` -- "existing JWT middleware")
 2. **Prior art:** `file` with description (e.g., `src/utils/email.ts` -- "reusable for notifications")
 3. **Docs:** `docs/path` (e.g., `docs/changes/user-auth/proposal.md` -- "established OAuth2 standard")
-4. **Session evidence:** Write via `manage_state` `append_entry` to `evidence` section.
+4. **Strategy grounding:** `STRATEGY.md` with section reference (e.g., `STRATEGY.md#tracks` -- "advances the 'pulse-reports' track"). Cite when Phase 1 step 0a loaded a valid strategy AND the decision is informed by it. Mandatory when the spec extends, narrows, or contradicts a strategy section.
+5. **Session evidence:** Write via `manage_state` `append_entry` to `evidence` section.
 
 **When to cite:** Phase 1 (existing code/patterns), Phase 3 (tradeoff justifications), Phase 4 (spec referencing existing implementation).
 
@@ -322,11 +376,13 @@ Technical claims about existing code, architecture, or tradeoffs MUST cite evide
 
 - **`harness validate`** -- Run after writing the spec. Verifies project health and spec placement.
 - **`harness check-docs`** -- Verify spec does not conflict with existing docs.
+- **`STRATEGY.md` grounding (Phase 1 step 0a)** -- When present at repo root and valid, loaded via the `read_strategy` MCP tool (which the harness MCP server backs with `validateStrategy` + `parseStrategyDoc` + `asStrategyDoc` from `@harness-engineering/core` — projects do not need core installed). Soft-fails when absent or invalid; cites strategy sections in the spec's evidence annotations when present. Boundary with `harness-strategy`: brainstorming READS; `harness-strategy` WRITES. Never modify `STRATEGY.md` from this skill.
 - **Spec location** -- `docs/changes/<feature>/proposal.md`.
-- **Handoff** -- Once approved, invoke harness-planning to create the implementation plan.
+- **Handoff** -- Once approved, hand off per the human's choice: harness-autopilot (recommended -- autonomous plan → execute → verify → review) or harness-planning (interactive plan only).
 - **Session directory** — When session slug is known, handoff goes to `.harness/sessions/<slug>/handoff.json`. The session directory structure is: `handoff.json`, `state.json`, `artifacts.json` (registry of spec/plan paths and file lists). Do not write to `.harness/handoff.json` in session context.
-- **Roadmap sync** -- After approval, call `manage_roadmap` action `add` to register as `planned`. Skip silently if no roadmap. Duplicates ignored.
-- **`emit_interaction`** -- End of Phase 4 to suggest transition to harness-planning (confirmed transition).
+- **Spec commit** -- After sign-off, the Phase 4 step 8 commit captures `docs/changes/<feature>/proposal.md`, `docs/changes/<feature>/SKILLS.md`, and the promoted roadmap together (in sharded mode: the `docs/roadmap.d/` shard plus the regenerated `docs/roadmap.md` aggregate; in monolith mode: `docs/roadmap.md`) so the spec enters git history at approval, not retroactively. `harness-execution` does not backfill these — see issue #487.
+- **Roadmap promotion** -- After approval (Phase 4 step 7), call `manage_roadmap` action `promote` to transition the named row to `planned` and link the spec atomically with the spec commit. Falls back to `add` (create new row) when the row does not exist; refuses on `in-progress`/`done`/`ambiguous`. Skip silently if no roadmap.
+- **`emit_interaction`** -- End of Phase 4 to record the transition to harness-autopilot or harness-planning (the human picks; default autopilot). The choice itself is asked in plain text -- `emit_interaction` records the confirmed transition, it does not surface the question.
 
 #### Requirement Phrasing
 
@@ -424,7 +480,7 @@ These are hard stops. Violating any gate means the process has broken down.
 - **More than 10 questions without converging:** The problem is too large or ambiguous. Stop and propose decomposition or a scoping exercise.
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-brainstorming/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-brainstorming/skill.yaml) ---
 name: harness-brainstorming
 version: "1.0.0"
 description: Structured ideation and exploration with harness methodology
@@ -480,6 +536,7 @@ state:
   files: []
 depends_on:
   - harness-planning
+  - harness-autopilot
   - harness-soundness-review
 
 </execution_context>

@@ -17,7 +17,7 @@ Phases:
 </objective>
 
 <execution_context>
---- SKILL.md (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-roadmap/SKILL.md) ---
+--- SKILL.md (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-roadmap/SKILL.md) ---
 # Harness Roadmap
 
 > Create and manage a unified project roadmap from existing specs and plans. Interactive, human-confirmed, always valid.
@@ -29,6 +29,7 @@ Phases:
 - When adding a new feature to an existing roadmap (`--add <feature-name>`)
 - When roadmap statuses may be stale and need updating from plan execution state (`--sync`)
 - When features need reordering, moving between milestones, or blocker updates (`--edit`)
+- When the roadmap needs tidying -- completed work archived, dead `planned` rows demoted (`--groom`)
 - When user asks about project status and no roadmap exists -- suggest `--create`
 - NOT for programmatic CRUD (use `manage_roadmap` MCP tool directly)
 
@@ -39,6 +40,25 @@ Phases:
 **Never write `docs/roadmap.md` without the human confirming the proposed structure first.**
 
 If the human has not seen and approved the milestone groupings and feature list, do not write the file. Present. Wait. Confirm. Then write.
+
+**Prompt the human in plain text — every `(y/n)`, "which feature?", and similar prompt in this skill is plain text only.** Do not elevate them to `AskUserQuestion`: feature lists routinely exceed its 4-option cap, and natural header choices ("Pick feature", "Remove feature") exceed its 12-char cap, causing the call to render as ERR.
+
+---
+
+### Storage mode: monolith vs sharded
+
+The roadmap has two physical layouts, auto-detected (not configured) by the presence of `docs/roadmap.d/`:
+
+- **Monolith** — a single `docs/roadmap.md` aggregate is canonical (legacy default).
+- **Sharded** — per-row shards `docs/roadmap.d/<slug>.md` (plus `_meta.md`) are canonical, and `docs/roadmap.md` is a generated `merge=ours` aggregate. New `harness init` projects are sharded by default.
+
+In sharded mode a write patches a **single shard** (conflict-free by construction) and **regenerates the aggregate** — so when committing a roadmap change, stage both `docs/roadmap.d/` and the regenerated `docs/roadmap.md`. Read/write only through `manage_roadmap` / the `RoadmapStore`; never parse the aggregate for content (read-source invariant R, ADR 0050). Subcommands:
+
+- `harness roadmap shard` — adopt sharding (split the monolith into shards), reversible with `harness roadmap unshard` (semantic round-trip).
+- `harness roadmap regen` — regenerate the aggregate from the shards (the fix when `harness validate` warns the aggregate has drifted).
+- `harness roadmap reconcile` — offline merge-triggered auto-done (flip closed-issue rows to `done`).
+
+**Stop hand-marking rows `done`** — rows reach `done` automatically when the implementing PR merges (auto-done reconciler; see knowledge [`merge-triggered-auto-done.md`](../../../../docs/knowledge/roadmap/merge-triggered-auto-done.md)). See also the adoption guide [`docs/guides/roadmap-sharding.md`](../../../../docs/guides/roadmap-sharding.md).
 
 ---
 
@@ -448,12 +468,67 @@ Choice?
 
 ---
 
+### Command: `--groom` -- Tidy the Roadmap
+
+Keeps the roadmap manageable over time. **Milestones are themes; statuses are lifecycle stages** -- grooming enforces that separation so the backlog never decays back into an undifferentiated dump.
+
+#### Phase 1: SCAN -- Detect Untidiness
+
+1. Check if `docs/roadmap.md` exists. If missing: error and direct the user to `--create`.
+2. Run `manage_roadmap` (`action: "groom"`) in a dry-run frame, or call `checkRoadmapHealth` from `@harness-engineering/core`, to surface the four health signals:
+   - **RMH001** -- completed (`done`) features still sitting in an active milestone.
+   - **RMH002** -- `planned` rows with neither a spec nor a plan (the orchestrator cannot auto-execute these; it escalates them to a human).
+   - **RMH003** -- lifecycle catch-all milestones (`Backlog`, `Current Work`) that should not exist.
+   - **RMH004** -- active milestones that have grown past the size cap (a mini-dump).
+
+#### Phase 2: PROPOSE -- Present the Plan
+
+Show the human exactly what grooming will do, in plain text:
+
+```
+GROOM PLAN
+
+Demote to backlog (planned with no spec/plan):
+  - Feature A (Theme X)
+  - Feature B (Theme Y)
+
+Archive to docs/roadmap-archive.md (completed):
+  - Feature C (Theme X)
+
+Flagged for manual routing (not auto-changed):
+  - Intake lane has 3 items awaiting a theme
+  - "Theme Z" has 28 features (cap 25) -- consider splitting
+
+Apply? (y/n)
+```
+
+Wait for confirmation. The mechanical changes (demote, archive) are safe and automated; **draining the Intake lane into themed milestones and splitting oversized milestones are human decisions** -- propose, do not auto-apply.
+
+#### Phase 3: WRITE -- Apply
+
+1. Run `manage_roadmap` (`action: "groom"`). It demotes unactionable `planned` rows to `backlog` and moves `done` features into `docs/roadmap-archive.md` under a `Shipped` milestone, returning the list of changes.
+2. For Intake-draining or milestone-splitting the human approved, follow up with `--edit` (move features between milestones).
+
+#### Phase 4: VALIDATE -- Verify
+
+1. Run `harness validate` and confirm the `roadmapHealth` check passes (no RMH003 errors; RMH001/002/004 warnings cleared or acknowledged).
+2. Summarize:
+
+   ```
+   Groom complete.
+   Demoted: N | Archived: N -> docs/roadmap-archive.md | Flagged for manual routing: N
+   harness validate (roadmapHealth): passed
+   ```
+
+---
+
 ## Harness Integration
 
-- **`manage_roadmap` MCP tool** -- Primary read/write interface for roadmap operations. Supports `show`, `add`, `update`, `remove`, and `query` actions. Use this when MCP is available for structured CRUD.
-- **`harness validate`** -- Run after any roadmap modification to verify project health. Mandatory in the VALIDATE phase of both `--create` and `--add`.
-- **Core `parseRoadmap`/`serializeRoadmap`** -- Fallback when MCP is unavailable. These functions in `packages/core/src/roadmap/` handle parsing and serializing the roadmap markdown format directly.
-- **Roadmap file** -- Always at `docs/roadmap.md`. This is the single source of truth for the project roadmap.
+- **`manage_roadmap` MCP tool** -- Primary read/write interface for roadmap operations. Supports `show`, `add`, `update`, `remove`, `query`, `sync`, `promote`, and `groom` actions. Use this when MCP is available for structured CRUD.
+- **`harness validate`** -- Run after any roadmap modification to verify project health. Mandatory in the VALIDATE phase of `--create`, `--add`, and `--groom`. The `roadmapHealth` check enforces the maintenance rules (RMH001-RMH004) as a regression guard.
+- **Core `checkRoadmapHealth`/`groomRoadmap`** -- Maintenance engine in `packages/core/src/roadmap/health.ts`. `checkRoadmapHealth` is read-only diagnostics; `groomRoadmap` is the pure transform (demote unactionable planned, archive done). Both are surfaced via `manage_roadmap` and `harness validate`.
+- **Core `parseRoadmap`/`serializeRoadmap`** -- Fallback when MCP is unavailable. These functions in `packages/core/src/roadmap/` handle parsing and serializing the roadmap markdown format directly. Note: the serializer only preserves frontmatter, milestones, features, and the Assignment History table -- never add convention prose or comments to `docs/roadmap.md`, they are dropped on the next write.
+- **Roadmap files** -- Live work in `docs/roadmap.md` (the orchestrator's source of truth); completed work archived to `docs/roadmap-archive.md` by `--groom`. Milestones are themes, not lifecycle stages -- promoted items land in the `Intake` lane and are groomed into themes.
 
 ## Success Criteria
 
@@ -625,7 +700,7 @@ These are hard stops. Violating any gate means the process has broken down.
 - **When MCP tool is unavailable:** Fall back to direct file manipulation via Read/Write tools using the roadmap markdown format. The core `parseRoadmap`/`serializeRoadmap` functions handle the format. Report the fallback to the human: "MCP tool unavailable, using direct file operations. External sync skipped — run `manage_roadmap sync` when MCP is restored to push changes to GitHub."
 
 
---- skill.yaml (../../.nvm/versions/node/v24.14.1/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-roadmap/skill.yaml) ---
+--- skill.yaml (../../.local/share/mise/installs/npm-harness-engineering-cli/10.1.0/lib/node_modules/@harness-engineering/cli/dist/agents/skills/claude-code/harness-roadmap/skill.yaml) ---
 name: harness-roadmap
 version: "1.0.0"
 description: Create and manage a unified project roadmap from existing specs and plans
