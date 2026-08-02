@@ -103,9 +103,29 @@ describe('collection domain', () => {
     });
 
     it('bumps updatedAt on every upsert', () => {
-      const before = existingItem.updatedAt;
-      const result = upsertOwnedItem([existingItem], { ...existingItem, notes: 'x' });
-      expect(result[0].updatedAt).not.toBe(before);
+      // Compared against the PREVIOUS RESULT, not the 2024 fixture. The old
+      // assertion used `existingItem.updatedAt` ('2024-01-01…'), so any stamp
+      // from this decade satisfied it — it passed 2000/2000 while the property
+      // it claimed to test held 3/2000.
+      const first = upsertOwnedItem([existingItem], { ...existingItem, notes: 'a' });
+      const second = upsertOwnedItem(first, { ...first[0], notes: 'b' });
+
+      expect(second[0].updatedAt).not.toBe(first[0].updatedAt);
+      expect(second[0].updatedAt > first[0].updatedAt).toBe(true);
+    });
+
+    it('orders a rapid burst of upserts strictly, with no ties', () => {
+      // The regime the real clock actually produces. Every reconciliation fixture
+      // in this suite is a full day apart, so nothing else exercises sub-second
+      // deltas — which is the only interval a user's consecutive edits occupy.
+      let items = [existingItem];
+      const stamps: string[] = [];
+      for (let i = 0; i < 50; i++) {
+        items = upsertOwnedItem(items, { ...items[0], notes: `edit-${i}` });
+        stamps.push(items[0].updatedAt);
+      }
+
+      expect(new Set(stamps).size).toBe(50);
     });
   });
 

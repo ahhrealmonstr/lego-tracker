@@ -102,4 +102,30 @@ describe('reconcileCollection', () => {
     expect(byId['c'].notes).toBe('local-only');
     expect(byId['d'].notes).toBe('remote-only');
   });
+
+  describe('sub-millisecond deltas', () => {
+    // Every other fixture in this file is a full day apart (86,400,000ms). The
+    // real clock never produces that; consecutive user edits land 0-1ms apart.
+    // These pin the behaviour in the regime that actually occurs.
+
+    it('keeps the local edit when it is one millisecond newer', () => {
+      const local = [makeItem('a', '2026-08-02T12:00:00.001Z', { notes: 'local-wins' })];
+      const remote = [makeItem('a', '2026-08-02T12:00:00.000Z', { notes: 'stale-remote' })];
+
+      expect(reconcileCollection(local, remote, [])[0].notes).toBe('local-wins');
+    });
+
+    it('awards an exact tie to remote — the documented last-write-wins rule', () => {
+      // Characterisation, not endorsement. `sync.ts` uses `>=`, so identical
+      // timestamps hand the win to remote. Before `nowIso()`, consecutive local
+      // edits collided on the same millisecond ~99.95% of the time, which made
+      // this branch a reliable data-loss path rather than a rare tiebreak.
+      // Monotonic stamping means a device can no longer tie with itself; two
+      // *different* devices still can, and this is what happens when they do.
+      const local = [makeItem('a', '2026-08-02T12:00:00.000Z', { notes: 'local' })];
+      const remote = [makeItem('a', '2026-08-02T12:00:00.000Z', { notes: 'remote' })];
+
+      expect(reconcileCollection(local, remote, [])[0].notes).toBe('remote');
+    });
+  });
 });

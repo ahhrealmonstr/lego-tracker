@@ -1,6 +1,7 @@
 export * from './config';
 export * from './types/lego';
 export * from './domain/catalog';
+export { nowIso } from './domain/clock';
 export * from './domain/collection';
 export * from './domain/sync';
 export * from './domain/options';

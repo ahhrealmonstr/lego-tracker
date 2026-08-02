@@ -52,8 +52,25 @@ describe('mapSetRow', () => {
   });
 
   it('returns null for year in the future', () => {
-    const futureYear = String(new Date().getFullYear() + 1);
+    // Derived from the clock deliberately — the boundary moves every New Year, so
+    // a literal would rot. `getUTCFullYear` mirrors the SUT: using local time here
+    // (as this test previously did) made it tautological, moving in lockstep with
+    // the SUT across every timezone instead of pinning the rule.
+    const futureYear = String(new Date().getUTCFullYear() + 1);
     expect(mapSetRow({ ...baseRow, year: futureYear }, themeMap)).toBeNull();
+  });
+
+  it('accepts the current year — the boundary the future check must not swallow', () => {
+    const currentYear = String(new Date().getUTCFullYear());
+    expect(mapSetRow({ ...baseRow, year: currentYear }, themeMap)).not.toBeNull();
+  });
+
+  it('evaluates the year boundary in UTC, not local time', () => {
+    // `getFullYear()` is local: for ~25 hours around New Year, UTC+14 and UTC-11
+    // disagree on what "next year" is, so the same row was accepted on one machine
+    // and rejected as future on another. Pinned to UTC on both sides.
+    const utcNextYear = String(new Date().getUTCFullYear() + 1);
+    expect(mapSetRow({ ...baseRow, year: utcNextYear }, themeMap)).toBeNull();
   });
 
   it('uses placeholder image when set_img_url is empty', () => {
