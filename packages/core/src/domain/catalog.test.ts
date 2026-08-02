@@ -22,6 +22,14 @@ vi.mock('../services/rebrickable', () => ({
 describe('Catalog Domain', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Re-established per test rather than once in the `vi.mock` factory above.
+    // With `restoreMocks: true` the factory's implementation is dropped between
+    // tests, so these fire-and-forget cache writes would return `undefined`
+    // instead of a promise and `catalog.ts` would throw on `.catch`. Setting the
+    // default here means each test starts from the same known state instead of
+    // inheriting whatever the previous one left behind.
+    vi.mocked(cacheCatalogItem).mockResolvedValue(undefined);
+    vi.mocked(cacheSetParts).mockResolvedValue(undefined);
   });
 
   describe('findByBarcode', () => {

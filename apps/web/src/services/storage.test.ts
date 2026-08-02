@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadCollection, saveCollection } from './storage';
+import { loadCollection, saveCollection, storageKey } from './storage';
 import type { OwnedLegoItem } from '@lego-tracker/core';
 
 const baseItem: OwnedLegoItem = {
@@ -31,20 +31,20 @@ describe('storage service', () => {
 
     it('filters out items that fail schema validation', () => {
       localStorage.setItem(
-        'brick-ledger.collection.v1',
+        storageKey,
         JSON.stringify([baseItem, { id: 'bad', type: 'unknown' }]),
       );
       expect(loadCollection()).toHaveLength(1);
     });
 
     it('returns empty array on malformed JSON', () => {
-      localStorage.setItem('brick-ledger.collection.v1', '{not valid json');
+      localStorage.setItem(storageKey, '{not valid json');
       expect(loadCollection()).toEqual([]);
     });
 
     it('returns empty array when stored value is not an array', () => {
       localStorage.setItem(
-        'brick-ledger.collection.v1',
+        storageKey,
         JSON.stringify({ id: 'not-array' }),
       );
       expect(loadCollection()).toEqual([]);
@@ -55,35 +55,35 @@ describe('storage service', () => {
   describe('missingPartsList field validation', () => {
     it('accepts an item with a valid missingPartsList array', () => {
       const item = { ...baseItem, missingPartsList: [{ partNum: '3001', partName: 'Brick', colorName: 'Red', quantity: 1, imgUrl: '' }] };
-      localStorage.setItem('brick-ledger.collection.v1', JSON.stringify([item]));
+      localStorage.setItem(storageKey, JSON.stringify([item]));
       expect(loadCollection()).toHaveLength(1);
     });
 
     it('accepts an item with an empty missingPartsList array', () => {
-      localStorage.setItem('brick-ledger.collection.v1', JSON.stringify([{ ...baseItem, missingPartsList: [] }]));
+      localStorage.setItem(storageKey, JSON.stringify([{ ...baseItem, missingPartsList: [] }]));
       expect(loadCollection()).toHaveLength(1);
     });
 
     it('accepts an item without a missingPartsList field (undefined)', () => {
-      localStorage.setItem('brick-ledger.collection.v1', JSON.stringify([baseItem]));
+      localStorage.setItem(storageKey, JSON.stringify([baseItem]));
       expect(loadCollection()).toHaveLength(1);
     });
 
     it('rejects an item where missingPartsList is a string', () => {
       const tampered = JSON.stringify([{ ...baseItem, missingPartsList: 'injected-string' }]);
-      localStorage.setItem('brick-ledger.collection.v1', tampered);
+      localStorage.setItem(storageKey, tampered);
       expect(loadCollection()).toHaveLength(0);
     });
 
     it('rejects an item where missingPartsList is a number', () => {
       const tampered = JSON.stringify([{ ...baseItem, missingPartsList: 42 }]);
-      localStorage.setItem('brick-ledger.collection.v1', tampered);
+      localStorage.setItem(storageKey, tampered);
       expect(loadCollection()).toHaveLength(0);
     });
 
     it('rejects an item where missingPartsList is an object (not array)', () => {
       const tampered = JSON.stringify([{ ...baseItem, missingPartsList: { partNum: '3001' } }]);
-      localStorage.setItem('brick-ledger.collection.v1', tampered);
+      localStorage.setItem(storageKey, tampered);
       expect(loadCollection()).toHaveLength(0);
     });
   });
@@ -91,7 +91,7 @@ describe('storage service', () => {
   describe('saveCollection', () => {
     it('writes items to localStorage under the correct key', () => {
       saveCollection([baseItem]);
-      const raw = localStorage.getItem('brick-ledger.collection.v1');
+      const raw = localStorage.getItem(storageKey);
       expect(raw).not.toBeNull();
       expect(JSON.parse(raw!)).toHaveLength(1);
     });

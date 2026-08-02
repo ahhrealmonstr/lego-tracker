@@ -1,6 +1,6 @@
 import type { SyncQueueEntry } from '@lego-tracker/core';
 
-const QUEUE_KEY = 'brick-ledger.sync-queue.v1';
+export const QUEUE_KEY = 'brick-ledger.sync-queue.v1';
 
 function getItemId(entry: SyncQueueEntry): string {
   return entry.type === 'upsert' ? entry.item.id : entry.itemId;
