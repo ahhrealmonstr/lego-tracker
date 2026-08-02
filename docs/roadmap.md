@@ -40,8 +40,10 @@ belong on this roadmap.
 - **Status**: done
 - **Milestone**: M1
 - **Track**: Web platform stabilization
-- **Spec**: — none written (the original roadmap linked an `oracle-integration`
-  proposal under `docs/changes/` that has never existed)
+- **Spec**: docs/changes/oracle-integration/proposal.md — superseded by Canary, kept
+  as a historical record. An earlier revision of this file claimed the spec "has
+  never existed"; it did, but was stranded on an unmerged branch when PR #7 was
+  squash-merged, and was recovered 2026-08-02.
 - **Tasks**:
   - [x] Install Oracle plugin via Claude Code marketplace
   - [x] Add Oracle section to AGENTS.md

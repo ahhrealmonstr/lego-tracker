@@ -1,0 +1,3 @@
+[tools]
+gh = "latest"
+node = "20.20.2"
