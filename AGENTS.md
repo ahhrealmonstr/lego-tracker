@@ -42,17 +42,18 @@
 
 See `docs/architecture.md` for detailed architectural decisions and dependency diagrams.
 
-## Oracle Test Personas
+## Canary Test Personas
 
-Oracle is installed as a Claude Code plugin providing four AI test personas. No API key or additional configuration is required.
+Canary — formerly Oracle — is installed as a Claude Code plugin providing AI test
+personas. No API key or additional configuration is required.
 
 ### Installation
 
 If personas are not available, run:
 
 ```text
-/plugin marketplace add https://github.com/bri-stevenski/oracle-test-ai-agent
-/plugin install oracle
+/plugin marketplace add https://github.com/bop-clocktower/canary
+/plugin install canary
 ```
 
 Then `/reload-plugins` to apply.
@@ -61,10 +62,11 @@ Then `/reload-plugins` to apply.
 
 | Persona | Purpose | Target |
 | --- | --- | --- |
-| `oracle-test-author` | Generate Vitest or Playwright tests from natural language | `packages/core/src/` (Vitest) or `apps/web/tests/` (Playwright) |
-| `oracle-test-reviewer` | Review existing tests for quality and coverage gaps | Any test file |
-| `oracle-framework-advisor` | Recommend Vitest vs Playwright based on what is being tested | Call before authoring when the right layer is unclear |
-| `oracle-flake-hunter` | Identify flaky or brittle tests | `packages/core/src/**/*.test.ts` |
+| `canary-test-author` | Generate Vitest or Playwright tests from natural language | `packages/core/src/` (Vitest) or `apps/web/tests/` (Playwright) |
+| `canary-test-reviewer` | Review existing tests for quality and coverage gaps | Any test file |
+| `canary-framework-advisor` | Recommend Vitest vs Playwright based on what is being tested | Call before authoring when the right layer is unclear |
+| `canary-flake-hunter` | Diagnose intermittent failures — passes locally, fails in CI | `packages/core/src/**/*.test.ts` |
+| `canary-test-healer` | Fix a consistently-failing test (distinct from flake-hunter) | Any failing test file |
 
 ### Test File Placement
 
