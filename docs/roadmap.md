@@ -178,7 +178,7 @@ belong on this roadmap.
   - [ ] Resolve architecture drift — `docs/architecture.md` calls `domain/catalog.ts → services/*` a "Known violation" while `harness.config.json` explicitly allows it; either amend the doc or revert the config and extract a `CatalogService`
   - [ ] End-to-end coverage of the core flow: add set → parts list → mark missing → export → backup
   - [ ] Doc-drift sweep across `docs/` after the M1–M7 run of merges
-  - [ ] Bump the CI/mise Node pin from 20.20.2 to current LTS (issue #9)
+  - [x] Bump the CI/mise Node pin from 20.20.2 to current LTS — now 24.18.1 (issue #9)
   - [ ] Close roadmap issues #2, #3, #4 — delivered in M5/M6, still open
 
 ## Collection & Provenance Data Model
