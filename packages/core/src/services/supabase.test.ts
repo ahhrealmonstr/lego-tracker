@@ -412,6 +412,19 @@ describe('Supabase Service', () => {
       expect(result?.tombstoneIds).toEqual(['set-99999']);
     });
 
+    // Regression: the column is NULL for wishlist items, and `acquiredQuality`
+    // is declared optional, not nullable. Mapping NULL through as `null` made
+    // the item fail storage validation and disappear on the next local load.
+    it('maps a NULL acquired_quality to undefined, not null', async () => {
+      const wishlistRow = { ...collectionRow, status: 'wishlist', acquired_quality: null };
+      const client = makeMockClient({ data: [wishlistRow], error: null });
+      client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });
+      const result = await loadCollectionFromCloud();
+      expect(result?.items).toHaveLength(1);
+      expect(result?.items[0].acquiredQuality).toBeUndefined();
+      expect(result?.items[0]).not.toHaveProperty('acquiredQuality', null);
+    });
+
     it('maps DB column names to OwnedLegoItem camelCase fields', async () => {
       const client = makeMockClient({ data: [collectionRow], error: null });
       client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } }, error: null });

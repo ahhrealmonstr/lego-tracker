@@ -156,7 +156,11 @@ function mapRowToOwnedItem(row: any): OwnedLegoItem {
     imageUrl: catalog.image_url,
     barcode: catalog.barcode,
     status: row.status,
-    acquiredQuality: row.acquired_quality,
+    // `?? undefined` is load-bearing: the column is NULL for wishlist items, and
+    // the type declares this optional, not nullable. Passing NULL through as
+    // `null` made a cloud-restored wishlist item fail storage validation and
+    // vanish on the next load.
+    acquiredQuality: row.acquired_quality ?? undefined,
     savedBox: row.saved_box,
     buildStatus: row.build_status,
     displayLocation: row.display_location ?? '',

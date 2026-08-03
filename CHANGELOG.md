@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- **Wishlist items no longer disappear on reload.** `createOwnedItem` omits `acquiredQuality` for wishlist items and the field is optional on `OwnedLegoItem`, but storage validation required it — so every wishlist item was silently discarded by `loadCollection()`. The same item restored from the cloud hit the same fate, because a NULL `acquired_quality` column was mapped through as `null` rather than `undefined`. Both paths fixed; a present-but-invalid value is still rejected.
+
 ### Changed (Tooling)
 
 - Node pinned to LTS 24.18.1 in both `mise.toml` and CI (was 20.20.2)

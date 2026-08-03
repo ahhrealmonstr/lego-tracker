@@ -44,7 +44,11 @@ function isOwnedLegoItem(item: unknown): item is OwnedLegoItem {
     typeof item.imageUrl === 'string' &&
     (typeof item.barcode === 'undefined' || typeof item.barcode === 'string') &&
     isOneOf(item.status, collectionStatuses) &&
-    isOneOf(item.acquiredQuality, acquisitionQualities) &&
+    // Optional on the type, so optional here. Requiring it dropped every
+    // wishlist item on load: `createOwnedItem` sets `acquiredQuality` only when
+    // status is 'collection'. A present-but-invalid value is still rejected.
+    (item.acquiredQuality === undefined ||
+      isOneOf(item.acquiredQuality, acquisitionQualities)) &&
     typeof item.savedBox === 'boolean' &&
     isOneOf(item.buildStatus, buildStatuses) &&
     typeof item.displayLocation === 'string' &&
