@@ -210,7 +210,7 @@ export interface PurchaseInfo {
 
 ### Task 4: `todayLocalDate()` — the local-date helper
 
-**Depends on:** Task 3 | **Files:** `packages/core/src/domain/provenance.ts`, `packages/core/src/domain/provenance.test.ts`
+**Depends on:** Tasks 2, 3 | **Files:** `packages/core/src/domain/provenance.ts`, `packages/core/src/domain/provenance.test.ts`
 
 The spec forbids a UTC derivation but the codebase has no local-date helper, so anyone needing one will reach for `toISOString()`. Give them the correct tool in the same module.
 
@@ -254,6 +254,7 @@ export function todayLocalDate(date: Date = new Date()): string {
 }
 ```
 
+**Verify:** `npx vitest run packages/core/src/domain/provenance.test.ts`
 **Commit:** `feat(core): add todayLocalDate helper for purchase dates`
 
 ---
@@ -312,7 +313,7 @@ export interface OwnedLegoItemV2 extends LegoCatalogItem {
 
 ---
 
-### Task 6: `currentConditionFor` and the acquisition-quality mapping
+### Task 6: `provenanceFromV1` — the acquisition-quality mapping
 
 **Depends on:** Tasks 2, 5 | **Files:** `packages/core/src/domain/migration.ts`, `packages/core/src/domain/migration.test.ts`
 
@@ -369,6 +370,7 @@ The last case is the important one: it makes the invariant a property over the w
 
 `acquiredQuality` is `AcquisitionQuality | undefined` — Task 5 of PR #31 established that wishlist items carry none.
 
+**Verify:** `npx vitest run packages/core/src/domain/migration.test.ts`
 **Commit:** `feat(core): map v1 acquisition quality to v2 provenance axes`
 
 ---
@@ -377,7 +379,17 @@ The last case is the important one: it makes the invariant a property over the w
 
 **Depends on:** Task 6 | **Files:** `packages/core/src/domain/migration.ts`, `packages/core/src/domain/migration.test.ts`
 
-Delivers observable truth 7 (SC6, domain half).
+Delivers observable truth 7 (SC6, domain half). Signature:
+
+```ts
+export function extractLocations(names: readonly string[]): {
+  locations: StorageLocation[];
+  /** Maps any source spelling to the id of the location it converged onto. */
+  idFor: (name: string) => string | null;
+};
+```
+
+Tests:
 
 ```ts
 describe('extractLocations', () => {
@@ -404,15 +416,23 @@ describe('extractLocations', () => {
 
 Normalization must match the SQL generated column exactly — `lower(trim(name))` — or the database and the domain will disagree about identity. State that in a comment referencing `storage_locations.normalized_name`.
 
+**Verify:** `npx vitest run packages/core/src/domain/migration.test.ts`
 **Commit:** `feat(core): extract storage locations with content-keyed identity`
 
 ---
 
 ### Task 8: Synthetic `acquired` event seeding
 
-**Depends on:** Tasks 5, 6 | **Files:** `packages/core/src/domain/migration.ts`, `packages/core/src/domain/migration.test.ts`
+**Depends on:** Tasks 5, 6, 7 | **Files:** `packages/core/src/domain/migration.ts`, `packages/core/src/domain/migration.test.ts`
 
-Delivers observable truth 6.
+Delivers observable truth 6. Signature:
+
+```ts
+/** `raw` is a v1 record already known valid — Task 9 screens malformed input. */
+export function acquiredEventFor(raw: OwnedLegoItem): CollectionEvent;
+```
+
+Tests:
 
 ```ts
 describe('acquiredEventFor', () => {
@@ -439,6 +459,7 @@ The second case is the point of the whole acquisition-vs-current split, so it is
 
 `at` comes from the record's own `addedAt` — a historical fact, so **not** `nowIso()`. `nowIso()` governs events generated *now*; this one is backdated by definition.
 
+**Verify:** `npx vitest run packages/core/src/domain/migration.test.ts`
 **Commit:** `feat(core): seed a synthetic acquired event per migrated item`
 
 ---
@@ -500,6 +521,7 @@ it('emits exactly one acquired event per surviving item', () => {
 });
 ```
 
+**Verify:** `npx vitest run packages/core/src/domain/migration.test.ts`
 **Commit:** `feat(core): add migrateV1ToV2 transform with drop accounting`
 
 ---
@@ -512,6 +534,7 @@ SC4 says "asserted against fixtures including malformed records". Tasks 6–9 te
 
 One test, one fixture, asserting: total accounting, location convergence, event count, and `isProvenanceValid` over every produced item.
 
+**Verify:** `npx vitest run packages/core/src/domain/migration.test.ts`
 **Commit:** `test(core): assert migration against a realistic mixed v1 fixture`
 
 ---
@@ -531,6 +554,7 @@ Types flow through the existing `export * from './types/lego'`.
 
 `index.test.ts` carries an N1 assertion keeping test-only helpers off the public surface. Extend it to assert the new public names are reachable — `isProvenanceValid`, `todayLocalDate`, `migrateV1ToV2` — so a missing barrel line fails a test rather than surfacing as a broken import three steps later.
 
+**Verify:** `npx vitest run packages/core/src/index.test.ts && npm run typecheck`
 **Commit:** `feat(core): export provenance and migration from the public barrel`
 
 ## Verification
@@ -556,6 +580,23 @@ The web suite passing unchanged is a real check here, not a formality — it is 
 | 6 — one acquired event per item | 8, 9 |
 | 7 — location convergence (SC6) | 7 |
 | 8 — no `toISOString` for dates | 4 |
+
+## Soundness review
+
+Run 2026-08-03, `--mode plan`. Converged after one fix pass.
+
+Auto-fixed:
+
+- **P3** — Task 4 modifies `provenance.ts`, created by Task 2, but declared only Task 3. Edge added.
+- **P4** — Tasks 7 and 8 both modify `migration.ts` with no edge between them. Task 8 now depends on Task 7.
+- **P2** — Tasks 4, 6–11 had no per-task verification command. `Verify:` lines added.
+- **Internal consistency** — Task 6's heading named `currentConditionFor`, a function no task defines. Renamed to `provenanceFromV1`.
+
+Surfaced and **dismissed with reason** (P6, warning):
+
+> **P6-001 — `todayLocalDate` (Task 4) has no consumer in this slice.** v1 carries no purchase data, so `migrateV1ToV2` sets every `PurchaseInfo` field to `null` and never calls the helper. Its real caller arrives at step 6 (UI purchase fields). Strict YAGNI says cut it.
+>
+> Kept deliberately. Task 3 ships `PurchaseInfo`, whose documented contract is a *prohibition* — never derive `purchasedAt` via `toISOString()`. Shipping a prohibition without its correct alternative in the same module is how the prohibition gets violated: the step-6 implementer finds the warning, finds no helper, and reaches for the thing the warning forbids. The helper and its timezone-property test are the enforcement.
 
 ## Out of scope, by design
 
