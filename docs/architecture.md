@@ -43,12 +43,24 @@ flowchart TD
   Core --> Types[core/types]
   Core_Domain[core/domain] --> Types
   Core_Services[core/services] --> Types
-  Core_Services --> Core_Domain
+  Core_Domain -. catalog orchestration only .-> Core_Services
 ```
 
-The domain layer must not import from the services layer.
+The domain layer must not import from the services layer, with one allowed
+exception: `packages/core/src/domain/catalog.ts` imports from
+`services/rebrickable` and `services/supabase` to orchestrate external catalog
+lookup and its Supabase cache.
 
-> **Known violation:** `packages/core/src/domain/catalog.ts` currently imports from `services/rebrickable` and `services/supabase` for the catalog orchestration. This is a tracked architectural debt — the orchestration belongs in a dedicated catalog service, keeping `catalog.ts` pure domain logic.
+This is an **allowance, not debt**. It is encoded in `harness.config.json`, where
+the `domain` layer lists `services` among its `allowedDependencies` with the
+rationale *"Domain depends on services for external catalog orchestration and
+caching."* The layer-boundary check passes on it by design; do not "fix" it
+without changing that config first.
+
+`catalog.ts` is the only domain module permitted to do this. Every other file
+under `domain/` must stay free of service imports — the boundary still holds
+everywhere else, and the architecture check enforces the reverse direction:
+nothing in `services/` may import from `domain/`.
 
 ## Runtime Data Flow
 

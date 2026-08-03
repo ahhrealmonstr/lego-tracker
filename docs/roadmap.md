@@ -175,7 +175,7 @@ belong on this roadmap.
 - **Spec**: *not yet written*
 - **Tasks**:
   - [ ] Land cloud-backup in production — close out issue #14 (see M7 blockers)
-  - [ ] Resolve architecture drift — `docs/architecture.md` calls `domain/catalog.ts → services/*` a "Known violation" while `harness.config.json` explicitly allows it; either amend the doc or revert the config and extract a `CatalogService`
+  - [x] Resolve architecture drift — `docs/architecture.md` called `domain/catalog.ts → services/*` a "Known violation" while `harness.config.json` allowed it. Resolved in favour of the config: documented as a scoped allowance for catalog orchestration, not debt
   - [ ] End-to-end coverage of the core flow: add set → parts list → mark missing → export → backup
   - [ ] Doc-drift sweep across `docs/` after the M1–M7 run of merges
   - [x] Bump the CI/mise Node pin from 20.20.2 to current LTS — now 24.18.1 (issue #9)
