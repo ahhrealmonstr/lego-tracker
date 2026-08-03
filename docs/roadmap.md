@@ -199,6 +199,18 @@ belong on this roadmap.
   - [ ] Trending value moved to a fast-follow — needs an external price feed, out of scope
         for the data model itself
 
+## Bulk Set Import
+
+- **Summary**: Widen collection import from the single hardcoded OMG Bricks CSV parser to a general set/part importer — several file formats, import from a URL, and merge modes (append / replace / subtract). Modelled on Rebrickable's "Import Sets" dialog.
+- **Status**: backlog
+- **Track**: Export & missing-parts interoperability — the *ingest* counterpart to this track's exports, sharing its format vocabulary (CSV, BSX, LDraw)
+- **Spec**: *not yet written*
+- **Tasks**:
+  - [ ] Shape the format matrix. Today `packages/core/src/domain/import.ts` handles exactly one shape — an OMG Bricks CSV with fixed columns — via `parseOmgBricksCSV`. Rebrickable's dialog accepts Brickset/Peeron CSV/TSV, BrickLink order/inventory and BrickStore XML, LDraw MPD/LDR, LDD LXF, Stud.io, plus any flat file with `set number`,`quantity` or `part`,`color`,`quantity` headers. Decide which of those are actually worth supporting before designing a parser interface.
+  - [ ] Decide merge semantics. Append / replace / subtract are not just list operations here — they have to compose with sync tombstones and last-write-wins reconciliation, so "replace" in particular needs defining against a synced collection rather than a local array.
+  - [ ] Decide whether import-from-URL is in scope. If so it needs domain validation up front: RR-002 was exactly this class of bug (Rebrickable pagination followed `page.next` URLs unvalidated, an SSRF vector).
+  - [ ] Generalising `parseOmgBricksCSV` should decompose it, not extend it. It is already the worst complexity offender in the repo — cyclomatic 33 against a threshold of 15 — so adding formats to it in place would make a known-failing harness `arch` check worse.
+
 ## Build Lifecycle & Backlog
 
 - **Summary**: The owned → building → completed → displayed flow, session build-progress, and a "forgotten sets" backlog queue.
