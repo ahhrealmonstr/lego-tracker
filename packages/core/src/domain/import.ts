@@ -1,3 +1,4 @@
+import { nowIso } from './clock';
 import type { LegoItemType, OwnedLegoItem } from '../types/lego';
 
 interface OmgBricksRow {
@@ -76,7 +77,7 @@ export function parseOmgBricksCSV(csvText: string): OwnedLegoItem[] {
     numberCounts.set(row.setNumber, (numberCounts.get(row.setNumber) ?? 0) + 1);
   }
 
-  const now = new Date().toISOString();
+  const now = nowIso();
 
   return rows.map((row) => {
     const type = detectType(row);

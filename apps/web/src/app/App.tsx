@@ -22,6 +22,7 @@ import {
   downloadBlob,
   findByBarcode,
   parseOmgBricksCSV,
+  nowIso,
   searchCatalog,
   seedCatalog,
   setConfig,
@@ -114,7 +115,7 @@ export function App() {
 
   function updateSelectedItem(patch: Partial<OwnedLegoItem>) {
     if (!selectedOwnedItem) return;
-    const updatedItem = { ...selectedOwnedItem, ...patch, updatedAt: new Date().toISOString() };
+    const updatedItem = { ...selectedOwnedItem, ...patch, updatedAt: nowIso() };
     setItems((currentItems) => upsertOwnedItem(currentItems, updatedItem));
     enqueueMutation({ type: 'upsert', item: updatedItem });
   }
@@ -122,7 +123,7 @@ export function App() {
   function removeSelectedItem() {
     if (!selectedOwnedItem) return;
     setItems((currentItems) => currentItems.filter((item) => item.id !== selectedOwnedItem.id));
-    enqueueMutation({ type: 'delete', itemId: selectedOwnedItem.id, deletedAt: new Date().toISOString() });
+    enqueueMutation({ type: 'delete', itemId: selectedOwnedItem.id, deletedAt: nowIso() });
     setActiveView('catalog');
   }
 

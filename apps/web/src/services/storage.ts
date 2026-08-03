@@ -1,6 +1,10 @@
 import type { OwnedLegoItem } from '@lego-tracker/core';
 
-const storageKey = 'brick-ledger.collection.v1';
+// Exported so tests bind to the SUT's key rather than duplicating the literal.
+// D8 of the provenance spec bumps this to .v2; with the literal duplicated in
+// tests, the malformed-JSON and not-an-array cases would keep passing while
+// reading a key nobody writes — green, and asserting nothing.
+export const storageKey = 'brick-ledger.collection.v1';
 
 const itemTypes = ['set', 'minifig'];
 const collectionStatuses = ['collection', 'wishlist'];

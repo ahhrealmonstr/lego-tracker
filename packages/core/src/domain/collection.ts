@@ -1,7 +1,8 @@
+import { nowIso } from './clock';
 import type { AcquisitionQuality, CollectionStatus, CollectionSummary, LegoCatalogItem, MissingSetPart, OwnedLegoItem, SetPart } from '../types/lego';
 
 export function createOwnedItem(item: LegoCatalogItem, status: CollectionStatus): OwnedLegoItem {
-  const now = new Date().toISOString();
+  const now = nowIso();
 
   return {
     ...item,
@@ -47,7 +48,7 @@ export function toggleMissingPart(item: OwnedLegoItem, part: SetPart): OwnedLego
 }
 
 export function upsertOwnedItem(items: OwnedLegoItem[], nextItem: OwnedLegoItem): OwnedLegoItem[] {
-  const updatedItem = { ...nextItem, updatedAt: new Date().toISOString() };
+  const updatedItem = { ...nextItem, updatedAt: nowIso() };
   const exists = items.some((item) => item.id === nextItem.id);
   if (!exists) {
     return [updatedItem, ...items];

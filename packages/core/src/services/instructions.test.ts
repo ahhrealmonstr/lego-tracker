@@ -1,14 +1,23 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fetchInstructionBooklets } from './instructions';
 import { getConfig } from '../config';
 
 vi.mock('../config', () => ({ getConfig: vi.fn() }));
 
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+// Stubbed PER TEST, not once at module scope. A bare `global.fetch = ...` never
+// unwinds, and even a module-scope `vi.stubGlobal` loses under a shared realm:
+// two test files install competing stubs onto the same global and whichever
+// unstubs first strips the other's. Re-stubbing in `beforeEach` makes each test
+// own its fetch regardless of what any other file did.
 
 describe('fetchInstructionBooklets', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch);
     vi.clearAllMocks();
     (getConfig as any).mockReturnValue({ supabaseUrl: 'https://abc.supabase.co' });
   });
