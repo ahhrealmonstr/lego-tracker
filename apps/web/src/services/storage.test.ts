@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { loadCollection, saveCollection, storageKey } from './storage';
-import type { OwnedLegoItem } from '@lego-tracker/core';
+import { createOwnedItem } from '@lego-tracker/core';
+import type { LegoCatalogItem, OwnedLegoItem } from '@lego-tracker/core';
+
+const catalogItem: LegoCatalogItem = {
+  id: 'set-21318', type: 'set', number: '21318',
+  name: 'Tree House', theme: 'Ideas', year: 2019,
+  pieceCount: 3036, retired: true, estimatedValue: 249.99,
+  imageUrl: 'https://images.brickset.com/sets/images/21318-1.jpg',
+};
 
 const baseItem: OwnedLegoItem = {
   id: 'set-10305', type: 'set', number: '10305',
@@ -35,6 +43,30 @@ describe('storage service', () => {
         JSON.stringify([baseItem, { id: 'bad', type: 'unknown' }]),
       );
       expect(loadCollection()).toHaveLength(1);
+    });
+
+    // Regression: `acquiredQuality` is optional on OwnedLegoItem, and
+    // `createOwnedItem` omits it entirely for wishlist items — but the validator
+    // required it, so every wishlist item was silently dropped on reload. Built
+    // through the real factory rather than a literal: the bug lives in the seam
+    // between what core produces and what storage accepts, and a hand-written
+    // fixture would have kept passing while production lost data.
+    it('round-trips a wishlist item, which carries no acquiredQuality', () => {
+      const wishlistItem = createOwnedItem(catalogItem, 'wishlist');
+      expect(wishlistItem.acquiredQuality).toBeUndefined();
+
+      saveCollection([wishlistItem]);
+
+      expect(loadCollection()).toHaveLength(1);
+      expect(loadCollection()[0].status).toBe('wishlist');
+    });
+
+    it('still rejects an acquiredQuality that is present but not a valid quality', () => {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify([{ ...baseItem, acquiredQuality: 'pristine' }]),
+      );
+      expect(loadCollection()).toEqual([]);
     });
 
     it('returns empty array on malformed JSON', () => {
