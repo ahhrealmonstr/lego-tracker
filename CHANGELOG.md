@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Node pinned to LTS 24.18.1 in both `mise.toml` and CI (was 20.20.2)
 - `lint:md` is now enforced: 154 pre-existing markdownlint errors cleared, and the linter wired into CI plus the pre-commit hook. Markdown-only commits lint instead of skipping every check; mixed commits get both gates
+- `restoreMocks: true` in both vitest configs — spies no longer leak their implementations into the next test. Three tests that passed only because of that leak now install their own mocks
 
 ### Added (Cloud Backup — anonymous session)
 

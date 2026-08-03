@@ -535,6 +535,10 @@ describe('Supabase Service', () => {
 
   describe('isSupabaseConfigured', () => {
     it('returns true when url and key are present', () => {
+      // `isSupabaseConfigured` builds a client, so `createClient` must return
+      // one. This previously passed only because an earlier test's
+      // `makeMockClient()` left a return value armed on the shared mock.
+      makeMockClient();
       expect(isSupabaseConfigured()).toBe(true);
     });
 

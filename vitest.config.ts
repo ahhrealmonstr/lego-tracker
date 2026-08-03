@@ -11,5 +11,11 @@ export default defineConfig({
     // and rate-limit assertions become vacuous. A 14-line barrel smoke test
     // silently disarms the security tests.
     isolate: true,
+    // Restore every `vi.spyOn` original after each test. Without it, a spy's
+    // implementation leaks into whatever test runs next, and a test can pass
+    // because of a mock some earlier test installed — the failure mode this
+    // suite has a documented history of. Three tests depended on that leak and
+    // were rewritten to install their own mocks.
+    restoreMocks: true,
   },
 });
