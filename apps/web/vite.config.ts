@@ -21,5 +21,8 @@ export default defineConfig({
     // Making them explicit means such a change is a visible edit, not a silent
     // regression behind a green build.
     isolate: true,
+    // See the note in the root vitest.config.ts — spies are restored after each
+    // test so no test can pass on a mock another test installed.
+    restoreMocks: true,
   },
 });

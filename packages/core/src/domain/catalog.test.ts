@@ -338,6 +338,14 @@ const part1: import('../types/lego').SetPart = {
 describe('getOrFetchSetParts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // This is a TOP-LEVEL describe, a sibling of 'Catalog Domain' — not nested
+    // inside it — so it does not inherit that block's mock defaults and has to
+    // restate this one. `getOrFetchSetParts` calls `cacheSetParts(...).catch()`
+    // fire-and-forget; with `restoreMocks: true` the factory's implementation is
+    // dropped between tests, so an unarmed mock returns `undefined`, `.catch`
+    // throws, and catalog.ts's blanket `try/catch` swallows it into an empty
+    // array — a green-looking mock failure disguised as a legitimate result.
+    vi.mocked(cacheSetParts).mockResolvedValue(undefined);
   });
 
   it('returns cached parts from Supabase without calling Rebrickable', async () => {
