@@ -74,7 +74,7 @@ Record results in the table at the bottom.
 ## Results
 
 | Criterion | Part | Pass? | Notes |
-|-----------|------|-------|-------|
+| ----------- | ------ | ------- | ------- |
 | SC1 session bootstraps | B1–B2 | ☐ | |
 | SC9 fail-open | B3 | ☐ | |
 | SC2 sync persists | C1–C3 | ☐ | |

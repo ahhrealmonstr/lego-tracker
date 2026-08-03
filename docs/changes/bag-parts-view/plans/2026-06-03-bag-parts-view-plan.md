@@ -32,6 +32,7 @@
 ### Task 1: DB migration — create set_parts table
 
 **Files:**
+
 - Create: `supabase/migrations/20260603000000_set_parts.sql`
 
 - [ ] **Step 1: Write the migration**
@@ -80,6 +81,7 @@ git commit -m "feat(db): add set_parts table for bag-level part cache"
 ### Task 2: Add SetPart type
 
 **Files:**
+
 - Modify: `packages/core/src/types/lego.ts`
 
 - [ ] **Step 1: Add the interface** at the end of `packages/core/src/types/lego.ts`
@@ -116,6 +118,7 @@ git commit -m "feat(types): add SetPart interface"
 ### Task 3: fetchSetInventorySets — TDD
 
 **Files:**
+
 - Modify: `packages/core/src/services/rebrickable.ts`
 - Modify: `packages/core/src/services/rebrickable.test.ts`
 
@@ -211,6 +214,7 @@ git commit -m "feat(rebrickable): add fetchSetInventorySets"
 ### Task 4: fetchPartsForInventory — TDD
 
 **Files:**
+
 - Modify: `packages/core/src/services/rebrickable.ts`
 - Modify: `packages/core/src/services/rebrickable.test.ts`
 
@@ -450,6 +454,7 @@ git commit -m "feat(rebrickable): add fetchPartsForInventory with pagination"
 ### Task 5: getSetParts — TDD
 
 **Files:**
+
 - Modify: `packages/core/src/services/supabase.ts`
 - Modify: `packages/core/src/services/supabase.test.ts`
 
@@ -577,6 +582,7 @@ git commit -m "feat(supabase): add getSetParts"
 ### Task 6: cacheSetParts — TDD
 
 **Files:**
+
 - Modify: `packages/core/src/services/supabase.ts`
 - Modify: `packages/core/src/services/supabase.test.ts`
 
@@ -694,6 +700,7 @@ git commit -m "feat(supabase): add cacheSetParts"
 ### Task 7: getOrFetchSetParts domain orchestrator — TDD
 
 **Files:**
+
 - Modify: `packages/core/src/domain/catalog.ts`
 - Modify: `packages/core/src/domain/catalog.test.ts`
 
@@ -881,6 +888,7 @@ git commit -m "feat(catalog): add getOrFetchSetParts orchestrator"
 ### Task 8: useSetParts hook
 
 **Files:**
+
 - Create: `apps/web/src/hooks/useSetParts.ts`
 
 No test infrastructure for hooks in web app — covered by domain-level tests above and browser verify in Task 10.
@@ -956,6 +964,7 @@ git commit -m "feat(web): add useSetParts hook"
 ### Task 9: PartsList component
 
 **Files:**
+
 - Create: `apps/web/src/components/PartsList.tsx`
 
 - [ ] **Step 1: Create the component**
@@ -1064,6 +1073,7 @@ git commit -m "feat(web): add PartsList component"
 ### Task 10: Wire DetailPanel + browser verify
 
 **Files:**
+
 - Modify: `apps/web/src/components/DetailPanel.tsx`
 
 - [ ] **Step 1: Add import** at the top of `DetailPanel.tsx`:
@@ -1134,6 +1144,7 @@ cd apps/web && npm run dev
 ```
 
 Open the app in the browser, search for a set (e.g. "75313" AT-AT), click it, and confirm:
+
 - "Loading parts…" appears briefly
 - Parts grouped by bag render below the owned-item form
 - Each part shows thumbnail, part number, color, quantity

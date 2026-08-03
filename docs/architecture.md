@@ -100,16 +100,19 @@ These are the **only** auth surface the web app may touch, and it reaches them e
 ## Data Model
 
 `LegoCatalogItem` — catalog data:
+
 - `id`, `type` (set | minifig), `number`, `name`, `theme`, `year`
 - `pieceCount`, `retired`, `estimatedValue`, `imageUrl`, `barcode?`
 
 `OwnedLegoItem` extends `LegoCatalogItem` with ownership tracking:
+
 - `status` (collection | wishlist), `acquiredQuality`, `savedBox`, `buildStatus`
 - `displayLocation`, `notes`, `missingParts` (freeform string)
 - `missingPartsList?: MissingSetPart[]` (structured missing parts, M6)
 - `quantity`, `addedAt`, `updatedAt`
 
 `SetPart` — parts list entry (M5):
+
 - `partNum`, `partName`, `colorName`, `quantity`, `bagNum`, `imgUrl`, `isSpare`
 
 `MissingSetPart` — subset of `SetPart` without bag/spare fields (M6)

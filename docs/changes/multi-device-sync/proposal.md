@@ -189,11 +189,11 @@ Mounts at app root (once). Mutation sites call `enqueueMutation` directly — th
 
 ## Testing
 
-| File                                              | What                                                                                                                     |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `packages/core/src/domain/sync.test.ts`           | Unit tests for `reconcileCollection`: remote-newer wins, local-newer wins, local-only preserved, tombstone removes, tombstone beats local-newer, empty inputs |
-| `packages/core/src/services/supabase.test.ts`     | Extend existing: `loadCollectionFromCloud` splits live/tombstone, returns null when unauthed, maps DB columns correctly  |
-| `apps/web/src/services/syncQueue.test.ts`         | enqueue appends, deduplicates by itemId, clear empties, load returns [] when absent                                      |
+| File | What |
+| --- | --- |
+| `packages/core/src/domain/sync.test.ts` | Unit tests for `reconcileCollection`: remote-newer wins, local-newer wins, local-only preserved, tombstone removes, tombstone beats local-newer, empty inputs |
+| `packages/core/src/services/supabase.test.ts` | Extend existing: `loadCollectionFromCloud` splits live/tombstone, returns null when unauthed, maps DB columns correctly |
+| `apps/web/src/services/syncQueue.test.ts` | enqueue appends, deduplicates by itemId, clear empties, load returns [] when absent |
 
 `useSync` and `SyncStatus` are covered by Playwright E2E — not unit-tested here.
 

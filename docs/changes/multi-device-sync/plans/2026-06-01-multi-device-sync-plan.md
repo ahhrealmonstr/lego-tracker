@@ -35,6 +35,7 @@ MODIFY  apps/web/src/app/App.tsx                           — wire hook, compon
 ## Task 1: Database migration
 
 **Files:**
+
 - Create: `supabase/migrations/20260601000000_sync_columns.sql`
 
 - [ ] **Step 1: Create the migration file**
@@ -67,6 +68,7 @@ git commit -m "feat(db): add added_at and deleted_at columns to user_collection"
 ## Task 2: Add `SyncQueueEntry` and `SyncStatus` types
 
 **Files:**
+
 - Modify: `packages/core/src/types/lego.ts`
 - Modify: `packages/core/src/index.ts`
 
@@ -106,6 +108,7 @@ git commit -m "feat(types): add SyncQueueEntry and SyncStatus"
 ## Task 3: Implement `reconcileCollection` (TDD)
 
 **Files:**
+
 - Create: `packages/core/src/domain/sync.test.ts`
 - Create: `packages/core/src/domain/sync.ts`
 
@@ -291,6 +294,7 @@ git commit -m "feat(core): add reconcileCollection with LWW and tombstone suppor
 ## Task 4: Extend Supabase service — `loadCollectionFromCloud` + updated `syncCollectionToCloud`
 
 **Files:**
+
 - Modify: `packages/core/src/services/supabase.ts`
 - Modify: `packages/core/src/services/supabase.test.ts`
 
@@ -856,6 +860,7 @@ git commit -m "feat(core): add loadCollectionFromCloud, update syncCollectionToC
 ## Task 5: Implement sync queue (TDD)
 
 **Files:**
+
 - Create: `apps/web/src/services/syncQueue.test.ts`
 - Create: `apps/web/src/services/syncQueue.ts`
 
@@ -1023,6 +1028,7 @@ git commit -m "feat(web): add sync queue with localStorage persistence and dedup
 ## Task 6: Implement reconcile orchestration
 
 **Files:**
+
 - Create: `apps/web/src/services/reconcile.ts`
 
 No unit tests — this function composes already-tested pieces and is covered at the integration/E2E level.
@@ -1068,6 +1074,7 @@ git commit -m "feat(web): add reconcile orchestration (pull→merge→push)"
 ## Task 7: Implement `useSync` hook
 
 **Files:**
+
 - Create: `apps/web/src/hooks/useSync.ts`
 
 - [ ] **Step 1: Create the `hooks` directory and `useSync.ts`**
@@ -1155,6 +1162,7 @@ git commit -m "feat(web): add useSync hook with interval and online/offline hand
 ## Task 8: Implement `SyncStatus` component
 
 **Files:**
+
 - Create: `apps/web/src/components/SyncStatus.tsx`
 
 - [ ] **Step 1: Create `apps/web/src/components/SyncStatus.tsx`**
@@ -1223,6 +1231,7 @@ git commit -m "feat(web): add SyncStatus component with syncing/offline/error st
 ## Task 9: Wire `App.tsx`
 
 **Files:**
+
 - Modify: `apps/web/src/app/App.tsx`
 
 This task removes the old manual sync UI and wires up `useSync`, `enqueueMutation`, and `SyncStatus`.

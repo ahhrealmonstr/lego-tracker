@@ -33,7 +33,7 @@ M6
 
 ## Architecture
 
-```
+```text
 npm run seed-catalog
   → scripts/seed-catalog.ts
       ├── fetchGzippedCsv(THEMES_URL) → parseThemes() → Map<id, name>

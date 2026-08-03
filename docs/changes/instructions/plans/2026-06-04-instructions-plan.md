@@ -8,7 +8,7 @@ When viewing a set, the detail panel shows available instruction booklets fetche
 
 ## Architecture
 
-```
+```text
 DetailPanel
   └── InstructionsSection
         └── useInstructions (hook)
@@ -33,7 +33,7 @@ DetailPanel
 
 ## File Map
 
-```
+```text
 CREATE  supabase/functions/instructions/index.ts
 CREATE  packages/core/src/services/instructions.ts
 CREATE  packages/core/src/services/instructions.test.ts
@@ -51,6 +51,7 @@ MODIFY  apps/web/src/app/styles.css              — instructions section styles
 ### Task 1: InstructionBooklet type + core service + env key fix
 
 **Files:**
+
 - Modify: `packages/core/src/types/lego.ts`
 - Create: `packages/core/src/services/instructions.ts`
 - Create: `packages/core/src/services/instructions.test.ts`
@@ -202,6 +203,7 @@ git commit -m "feat(instructions): InstructionBooklet type + fetchInstructionBoo
 ### Task 2: Supabase Edge Function
 
 **Files:**
+
 - Create: `supabase/functions/instructions/index.ts`
 
 - [ ] **Step 1: Write the Edge Function**
@@ -279,6 +281,7 @@ git commit -m "feat(instructions): Supabase Edge Function — scrape LEGO instru
 ### Task 3: useInstructions hook + InstructionsSection in DetailPanel
 
 **Files:**
+
 - Create: `apps/web/src/hooks/useInstructions.ts`
 - Modify: `apps/web/src/components/DetailPanel.tsx`
 - Modify: `apps/web/src/app/styles.css`
@@ -477,6 +480,7 @@ Expected: JSON with `booklets` array containing 2 items and `legoUrl`.
 - [ ] **Step 3: Open the app and navigate to Lion Knights Castle**
 
 Scroll to the bottom of the detail panel. The "Building Instructions" section should show:
+
 - "Part 1 of 2" download card
 - "Part 2 of 2" download card
 - "LEGO.com ↗" link
@@ -498,7 +502,7 @@ git push
 ## Summary
 
 | Task | What | Time |
-|---|---|---|
+| --- | --- | --- |
 | 1 | InstructionBooklet type + service + env key fix | 6 min |
 | 2 | Supabase Edge Function (Deno) | 4 min |
 | 3 | useInstructions hook + InstructionsSection UI + CSS | 8 min |

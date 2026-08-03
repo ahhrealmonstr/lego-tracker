@@ -1,6 +1,5 @@
 ---
 feature: cloud-backup
-title: Anonymous Cloud Backup with Optional Account-Linking
 status: draft
 created: 2026-07-20
 keywords: [anonymous-auth, supabase, cloud-backup, account-linking, magic-link, reconcile, single-flight, rls, local-first, backup-status]
@@ -49,8 +48,8 @@ metadata) therefore lives only in `localStorage`, unprotected, and the fire-and-
 
 ## Decisions Made
 
-| #  | Decision | Rationale |
-|----|----------|-----------|
+| # | Decision | Rationale |
+| --- | --- | --- |
 | D1 | Anonymous cloud backup via `signInAnonymously()`, not a full login | STRATEGY.md commits to lifecycle consolidation + provenance, **not** multi-device; "stabilize before expanding surface". Zero friction. |
 | D2 | Add an **optional** account-link (email magic-link) upgrade | The anon session token lives in `localStorage`; a full wipe orphans cloud data. Linking is the only path that protects the valuable catalog against total loss. |
 | D3 | Bundle sync-reliability fixes (single-flight `reconcile` guard + honest error surfacing) | Sync goes *live* here, waking the previously-dormant concurrency race (ideation #3) and the lossy "Sync failed" surfacing. A backup that can interleave or misreport is not stabilized. |
@@ -120,31 +119,36 @@ Linking preserves `uid`, so existing rows carry over with no data movement.
 
 ## Integration Points
 
-**Entry Points**
+### Entry Points
+
 - New: `useAuth` hook + app-boot bootstrap effect (anonymous session).
 - New core exports: `ensureAnonymousSession`, `linkEmailIdentity`, `getSessionSnapshot` from
   `packages/core/src/services/supabase.ts`.
 - Changed: `reconcile()` (single-flight), `useSync` (session-gated first run + typed errors),
   `SyncStatus` (behavior → backup status + "Secure my backup").
 
-**Registrations Required**
+### Registrations Required
+
 - Re-export the three new functions through the core public barrel so web imports via the public
   entry, not a deep path.
 - Wire `useAuth` into the app bootstrap and pass backup state into `SyncStatus`.
 
-**Documentation Updates**
+### Documentation Updates
+
 - `docs/architecture.md` — record auth/session responsibility in core's supabase service, the
   anon-backup + linking model, and decision D5.
 - Deploy/README note — the hosted-project `enable_anonymous_sign_ins` toggle and the auth redirect
   URL as required setup.
 - `CHANGELOG.md` entry.
 
-**Architectural Decisions (ADR candidates)**
+### Architectural Decisions (ADR candidates)
+
 - **D1 (anonymous backup over full auth)** warrants a standalone ADR — a durable product-shaping
   choice (deferring multi-device auth) that future work will repeatedly reference. Points back to
   Decisions Made; not restated here.
 
-**Knowledge Impact**
+### Knowledge Impact
+
 - New graph concepts: *anonymous-session backup*, *account-linking (uid preservation)*,
   *single-flight reconcile*, *fail-open backup*. Relationships: `SyncStatus` —reflects→ `reconcile`
   —guarded-by→ single-flight; `linkEmailIdentity` —upgrades→ anonymous session.

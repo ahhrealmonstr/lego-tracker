@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed (Tooling)
+
+- Node pinned to LTS 24.18.1 in both `mise.toml` and CI (was 20.20.2)
+- `lint:md` is now enforced: 154 pre-existing markdownlint errors cleared, and the linter wired into CI plus the pre-commit hook. Markdown-only commits lint instead of skipping every check; mixed commits get both gates
+
 ### Added (Cloud Backup — anonymous session)
+
 - Silent anonymous Supabase session on boot — cloud backup now works with zero login friction
 - Optional "Secure my backup" email magic-link upgrade that preserves the same `uid` and data
 - `ensureAnonymousSession`, `linkEmailIdentity`, `getSessionSnapshot`, `onSessionChange` auth wrappers in core, exposed via the public barrel
@@ -14,12 +20,14 @@ All notable changes to this project will be documented in this file.
 - `enable_anonymous_sign_ins = true` in `supabase/config.toml`
 
 ### Changed
+
 - Memoized the Supabase client as a singleton with a session cache
 - `useSync` gates its first run on session readiness and surfaces a typed error reason instead of a blanket "Sync failed"
 
 ## 0.1.0 — 2026-06-18
 
 ### Added (M6 — Missing Parts)
+
 - Mark individual parts as missing directly from the parts grid
 - Structured `MissingSetPart[]` list replaces freeform missing-parts string
 - `MissingPartsList` component with trash-icon removal
@@ -28,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - `missing_parts_list` JSONB column in Supabase + cloud sync
 
 ### Added (M5 — Parts & Instructions)
+
 - `PartsList` component: parts grid grouped by bag, with spare parts section
 - Per-bag CSV and BSX export alongside full-set export
 - CSV formula injection protection (`=+-@` prefix escaping)
@@ -36,22 +45,26 @@ All notable changes to this project will be documented in this file.
 - `useInstructions` hook and `fetchInstructionBooklets` service
 
 ### Added (M4 — UI Polish)
+
 - Dark mode via CSS custom properties, warm palette
 - Mobile panel switching (list ↔ detail) with ← Back nav
 - Stat cards, shadow lifts, badge/pill styling, parts grid layout
 
 ### Added (M3 — Sync)
+
 - Multi-device sync via Supabase: tombstones, last-write-wins, offline queue
 - `useSync` hook with 5-minute background interval and online/offline awareness
 - `SyncStatus` indicator in sidebar
 
 ### Added (M2 — Catalog)
+
 - Rebrickable API integration: live set/minifig search and barcode lookup
 - Supabase catalog cache: lazy-fetch with auto-caching
 - Bulk CSV seed pipeline: 27k sets from Rebrickable (`npm run seed-catalog`)
 - Barcode scanner: chains seed catalog → Supabase cache → Rebrickable
 
 ### Added (M1 — Foundation)
+
 - Vite + React web app (`apps/web`)
 - `@lego-tracker/core` shared domain package
 - Supabase-backed collection storage with RLS

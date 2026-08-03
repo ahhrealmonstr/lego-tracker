@@ -21,7 +21,7 @@ From the PartsList view, clicking CSV or BSX downloads the full set's parts (or 
 
 ## File Map
 
-```
+```text
 CREATE  packages/core/src/domain/partsExport.ts
 CREATE  packages/core/src/domain/partsExport.test.ts
 MODIFY  packages/core/src/index.ts
@@ -35,6 +35,7 @@ MODIFY  apps/web/src/components/PartsList.tsx
 ### Task 1: Implement and test `partsToCSV` and `partsToBSX`
 
 **Files:**
+
 - Create: `packages/core/src/domain/partsExport.ts`
 - Create: `packages/core/src/domain/partsExport.test.ts`
 
@@ -189,6 +190,7 @@ git commit -m "feat(parts): partsToCSV and partsToBSX export functions"
 ### Task 2: Wire export buttons into PartsList
 
 **Files:**
+
 - Modify: `apps/web/src/components/PartsList.tsx`
 
 - [ ] **Step 1: Add imports**
@@ -314,6 +316,7 @@ git commit -m "feat(parts): CSV and BSX export buttons — full set and per-bag"
 - [ ] **Step 1: Open the app and navigate to a set with parts**
 
 Navigate to Lion Knights Castle (10305). The parts section has already loaded and been cached, so it appears immediately. Verify:
+
 - "CSV" and "BSX" buttons appear in the parts header
 - Clicking CSV downloads `10305-parts.csv` with the right columns
 - Clicking BSX downloads `10305-parts.bsx` with valid XML
@@ -335,7 +338,7 @@ git push
 ## Summary
 
 | Task | What | Time |
-|---|---|---|
+| --- | --- | --- |
 | 1 | `partsToCSV` + `partsToBSX` pure functions with tests | 6 min |
 | 2 | Export buttons in PartsList (header + per-bag) | 5 min |
 | 3 | Browser smoke test + roadmap | 4 min |

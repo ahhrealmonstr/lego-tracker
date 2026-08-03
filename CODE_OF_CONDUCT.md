@@ -24,7 +24,7 @@ We are committed to making participation in this project a harassment-free exper
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainer at **b.stevenski.eng@pm.me**. All complaints will be reviewed promptly and confidentially.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainer at **<b.stevenski.eng@pm.me>**. All complaints will be reviewed promptly and confidentially.
 
 ## Attribution
 

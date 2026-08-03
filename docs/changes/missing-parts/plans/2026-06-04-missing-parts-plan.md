@@ -8,7 +8,7 @@ From a set's detail panel, the user can mark individual parts as missing, see a 
 
 ## Architecture
 
-```
+```text
 DetailPanel
   ├── PartsList          — part cards now have a "mark missing" toggle (owned sets only)
   └── MissingPartsList   — shows missing parts, remove buttons, CSV/BSX export
@@ -30,7 +30,7 @@ DetailPanel
 
 ## File Map
 
-```
+```text
 MODIFY  packages/core/src/types/lego.ts              — add MissingSetPart; add missingPartsList to OwnedLegoItem
 MODIFY  packages/core/src/domain/collection.ts       — add toggleMissingPart; init missingPartsList in createOwnedItem
 MODIFY  packages/core/src/domain/collection.test.ts  — add tests for toggleMissingPart
@@ -49,6 +49,7 @@ MODIFY  apps/web/src/app/styles.css                  — missing parts styles
 ### Task 1: MissingSetPart type + toggleMissingPart + collection init
 
 **Files:**
+
 - Modify: `packages/core/src/types/lego.ts`
 - Modify: `packages/core/src/domain/collection.ts`
 - Modify: `packages/core/src/domain/collection.test.ts`
@@ -171,6 +172,7 @@ git commit -m "feat(missing-parts): MissingSetPart type + toggleMissingPart + Ow
 ### Task 2: PartsList missing toggle + MissingPartsList component
 
 **Files:**
+
 - Modify: `apps/web/src/components/PartsList.tsx`
 - Create: `apps/web/src/components/MissingPartsList.tsx`
 - Modify: `apps/web/src/app/styles.css`
@@ -416,17 +418,20 @@ Add to `apps/web/src/app/styles.css` after the instructions section:
 Update `DetailPanel` to accept `onToggleMissing` prop:
 
 Add to the props interface:
+
 ```ts
 onToggleMissing: (part: SetPart) => void;
 ```
 
 Add import at top:
+
 ```ts
 import { MissingPartsList } from './MissingPartsList';
 import type { SetPart } from '@lego-tracker/core';
 ```
 
 Replace the PartsList render:
+
 ```tsx
 {item.type === 'set' && (
   <PartsList
@@ -461,6 +466,7 @@ function handleToggleMissing(part: SetPart) {
 ```
 
 Pass to `DetailPanel`:
+
 ```tsx
 onToggleMissing={handleToggleMissing}
 ```
@@ -487,6 +493,7 @@ git commit -m "feat(missing-parts): mark parts missing from PartsList, MissingPa
 - [ ] **Step 1: Open the app and mark parts as missing**
 
 Navigate to Lion Knights Castle (owned). In the parts list, click the "!" button on a few part cards. Verify:
+
 - Part card gets red border and "✓" indicator
 - Missing parts appear in the "Missing Parts" section below
 - CSV and BSX export buttons appear in the missing parts header
@@ -508,7 +515,7 @@ git push
 ## Summary
 
 | Task | What | Time |
-|---|---|---|
+| --- | --- | --- |
 | 1 | Type + toggleMissingPart + tests | 7 min |
 | 2 | PartsList toggle + MissingPartsList + DetailPanel wiring + CSS | 12 min |
 | 3 | Smoke test + roadmap | 4 min |
