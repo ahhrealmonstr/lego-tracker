@@ -1,3 +1,7 @@
+# Node is pinned in two places and they must match:
+#   - this file (local dev via mise)
+#   - .github/workflows/ci.yml (`node-version:` for actions/setup-node)
+# Bump both together. Target the active LTS line.
 [tools]
 gh = "latest"
-node = "20.20.2"
+node = "24.18.1"
