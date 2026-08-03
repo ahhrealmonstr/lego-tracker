@@ -2,6 +2,12 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { CollectionStatus, LegoCatalogItem, OwnedLegoItem, itemTypeLabels } from '@lego-tracker/core';
 
+// Distinct parts, not summed quantity: the badge has to agree with the list it
+// sends you to, and a reorder is a set of elements rather than a piece count.
+function missingPartCount(item: LegoCatalogItem | OwnedLegoItem): number {
+  return (item as OwnedLegoItem).missingPartsList?.length ?? 0;
+}
+
 export function ItemList({
   activeView,
   catalogItems,
@@ -39,6 +45,15 @@ export function ItemList({
             <div className="item-title-line">
               <strong>{item.number}</strong>
               <span>{itemTypeLabels[item.type]}</span>
+              {activeView !== 'catalog' && missingPartCount(item) > 0 ? (
+                <span
+                  className="missing-badge"
+                  data-testid={`missing-badge-${item.id}`}
+                  title={`${missingPartCount(item)} missing ${missingPartCount(item) === 1 ? 'part' : 'parts'}`}
+                >
+                  {missingPartCount(item)}
+                </span>
+              ) : null}
             </div>
             <p>{item.name}</p>
             <small>{item.theme}</small>

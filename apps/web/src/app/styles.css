@@ -1017,3 +1017,26 @@ h1 {
     flex-direction: column;
   }
 }
+
+/* Missing-parts badge on collection rows. Answers "which of my sets are
+   incomplete?" at a glance — previously that required opening each set, since
+   missingPartsList was only rendered in the detail panel.
+   Borrows the .badge-row pill shape from M4 but uses the accent colour rather
+   than the gold price tint: this is a call to action, not a neutral attribute. */
+.item-title-line .missing-badge {
+  /* Scoped to .item-title-line deliberately: the `.item-title-line span` rule
+     above sets --color-text-subtle at specificity 0-1-1, which beats a bare
+     .missing-badge (0-1-0) and rendered this grey — neutral, when the whole
+     point is that it reads as a call to action. */
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  border-radius: 999px;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 20px;
+  padding: 3px 7px;
+  text-align: center;
+}
