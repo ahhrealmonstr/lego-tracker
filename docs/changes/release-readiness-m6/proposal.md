@@ -10,7 +10,7 @@
 ## Phase 1 — Audit Findings
 
 | ID | Severity | Area | Finding |
-|----|----------|------|---------|
+| ---- | ---------- | ------ | --------- |
 | RR-001 | CRITICAL | Data | `missingPartsList` (M6) had no DB column — data was silently dropped on every cloud sync |
 | RR-002 | HIGH | Security (SEC-R005) | Rebrickable pagination followed `page.next` URLs without domain validation (SSRF vector) |
 | RR-003 | HIGH | Security (SEC-R001) | Instruction booklet URLs rendered in `<a href>` without origin validation |
@@ -29,7 +29,7 @@
 Four parallel maintenance agents ran against the codebase:
 
 | Agent | Result |
-|-------|--------|
+| ------- | -------- |
 | harness-documentation-maintainer | Found drift in 3 docs — all fixed |
 | harness-security-reviewer | 5 security findings — all auto-fixed with tests |
 | harness-entropy-cleaner | Unused imports removed (`InstructionBooklet`, `MissingSetPart` from DetailPanel) |
@@ -42,7 +42,7 @@ Four parallel maintenance agents ran against the codebase:
 ### Security fixes (with TDD: RED verified, then GREEN)
 
 | Fix | File | Test |
-|-----|------|------|
+| ----- | ------ | ------ |
 | DB migration + sync payload | `supabase/migrations/20260618000000_missing_parts_list.sql` + `supabase.ts` | `supabase.test.ts` — 4 new tests |
 | Pagination SSRF guard | `rebrickable.ts` | `rebrickable.test.ts` — 4 new tests |
 | Booklet URL origin validation | `DetailPanel.tsx` | (validated in security review; component tests cover it) |
@@ -52,7 +52,7 @@ Four parallel maintenance agents ran against the codebase:
 ### Build & infrastructure fixes
 
 | Fix | File |
-|-----|------|
+| ----- | ------ |
 | Created `packages/core/tsconfig.json` | Enables standalone `tsc` build |
 | Added root `package.json` scripts | `test`, `typecheck`, `lint` |
 | Created `.github/workflows/ci.yml` | Typecheck + test + build on push/PR |
@@ -69,14 +69,14 @@ Four parallel maintenance agents ran against the codebase:
 ### Not auto-fixed (human judgment required)
 
 | Finding | Reason |
-|---------|--------|
+| --------- | -------- |
 | RR-010: `catalog.ts` layer violation | Refactor requires deciding where orchestration logic lives — deferred to M7 planning |
 
 ---
 
 ## Phase 4 — Final Verification
 
-```
+```text
 Test suite:   177 / 177 ✓  (150 core, 27 web)
 TypeScript:   Passes with strict mode
 Build:        apps/web builds clean

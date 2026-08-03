@@ -96,7 +96,7 @@ afterEach(() => {
 });
 
 describe('pre-commit hook gating', () => {
-  it('skips the gate for a markdown-only commit', () => {
+  it('lints markdown but skips typecheck/tests for a markdown-only commit', () => {
     workdir = setup();
     const r = commit(workdir, (git) => {
       writeFileSync(join(workdir!, 'README.md'), '# changed\n');
@@ -104,10 +104,30 @@ describe('pre-commit hook gating', () => {
     });
 
     expect(r.exitCode).toBe(0);
-    expect(r.npmCalls).toEqual([]);
+    expect(r.npmCalls).toEqual(['run lint:md']);
   });
 
-  it('skips the gate for a LICENSE in a subdirectory', () => {
+  it('blocks a markdown-only commit when the markdown lint fails', () => {
+    workdir = setup();
+    const r = commit(
+      workdir,
+      (git) => {
+        writeFileSync(join(workdir!, 'README.md'), '# changed\n');
+        git('add', 'README.md');
+      },
+      1,
+    );
+
+    expect(r.exitCode).not.toBe(0);
+    expect(r.output).toContain('Commit blocked');
+
+    const log = execFileSync('git', ['log', '--oneline'], { cwd: workdir, encoding: 'utf-8' });
+    expect(log.trim().split('\n')).toHaveLength(1); // only the seed commit
+  });
+
+  // LICENSE is docs-adjacent but not markdown, so there is nothing for
+  // markdownlint to check — the commit should cost nothing.
+  it('skips every check for a LICENSE in a subdirectory', () => {
     workdir = setup();
     const r = commit(workdir, (git) => {
       mkdirSync(join(workdir!, 'packages'), { recursive: true });
@@ -130,7 +150,10 @@ describe('pre-commit hook gating', () => {
     expect(r.npmCalls).toHaveLength(2);
   });
 
-  it('runs the gate for a mixed docs + source commit', () => {
+  // A mixed commit gets BOTH gates. Running only typecheck+tests here would
+  // leave a hole: any markdown could reach main by riding along with a source
+  // file, which is most of the markdown this repo actually commits.
+  it('runs the source gate AND the markdown lint for a mixed commit', () => {
     workdir = setup();
     const r = commit(workdir, (git) => {
       writeFileSync(join(workdir!, 'README.md'), '# changed\n');
@@ -139,7 +162,7 @@ describe('pre-commit hook gating', () => {
     });
 
     expect(r.exitCode).toBe(0);
-    expect(r.npmCalls).toHaveLength(2);
+    expect(r.npmCalls).toEqual(['run typecheck', 'test', 'run lint:md']);
   });
 
   // Regression: --diff-filter=ACMR excluded D, so this skipped the gate entirely.
@@ -163,7 +186,8 @@ describe('pre-commit hook gating', () => {
     });
 
     expect(r.exitCode).toBe(0);
-    expect(r.npmCalls).toHaveLength(2);
+    // The deleted .ts forces the source gate; the new .md adds the lint.
+    expect(r.npmCalls).toEqual(['run typecheck', 'test', 'run lint:md']);
   });
 
   it('gates .txt fixtures rather than treating them as docs', () => {

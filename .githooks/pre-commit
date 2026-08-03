@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# pre-commit — gate commits on typecheck + tests.
+# pre-commit — gate commits on typecheck + tests, and markdown on markdownlint.
 #
 # Installed via `core.hooksPath` (see `npm run hooks:install`), so this file is
 # version-controlled and survives a fresh clone — unlike anything dropped in
@@ -11,6 +11,11 @@
 # from what actually gets committed. Closing that gap properly needs
 # `git stash --keep-index`, whose failure modes inside a hook are worse than the
 # gap itself. Do not read a green result as "the committed tree passes".
+#
+# `lint:md` widens that caveat: it lints the repo-wide glob, not just the staged
+# markdown. So a docs commit can be blocked by an unrelated broken .md elsewhere
+# in the tree. That is tolerable only because the baseline is zero errors — if it
+# ever drifts back above zero, every docs commit blocks until it is fixed.
 #
 # Bypass with `git commit --no-verify`.
 #
@@ -33,11 +38,23 @@ if [ -z "$staged" ]; then
   exit 0
 fi
 
-# Docs-only commits skip the gate: markdown cannot break typecheck or tests.
-# `.txt` is deliberately excluded from this list — test fixtures are commonly .txt
-# and must gate. LICENSE matches at any depth, not just the repo root.
-if ! printf '%s\n' "$staged" | grep -qvE '\.md$|(^|/)LICENSE$'; then
-  echo "🐢 pre-commit: docs-only change — skipping typecheck + tests."
+# Two independent questions, deliberately not collapsed into one:
+#   - any non-doc file staged?  -> typecheck + tests must run
+#   - any markdown staged?      -> markdownlint must run
+# Neither implies the other. Markdown cannot break a typecheck, and a .ts file
+# cannot break markdownlint. A mixed commit answers yes to both and gets both —
+# without that, any markdown could reach main by riding along with a source file,
+# which is how most markdown in this repo is actually committed.
+#
+# `.txt` is deliberately excluded from the docs list — test fixtures are commonly
+# .txt and must gate. LICENSE matches at any depth, not just the repo root.
+needs_source_gate=0
+needs_md_lint=0
+printf '%s\n' "$staged" | grep -qvE '\.md$|(^|/)LICENSE$' && needs_source_gate=1
+printf '%s\n' "$staged" | grep -qE '\.md$' && needs_md_lint=1
+
+if [ "$needs_source_gate" -eq 0 ] && [ "$needs_md_lint" -eq 0 ]; then
+  echo "🐢 pre-commit: no source and no markdown staged — nothing to check."
   exit 0
 fi
 
@@ -67,8 +84,14 @@ run_check() {
   fi
 }
 
-run_check "typecheck" npm run typecheck
-run_check "tests" npm test
+if [ "$needs_source_gate" -eq 1 ]; then
+  run_check "typecheck" npm run typecheck
+  run_check "tests" npm test
+fi
+
+if [ "$needs_md_lint" -eq 1 ]; then
+  run_check "markdown lint" npm run lint:md
+fi
 
 if [ ${#failed[@]} -gt 0 ]; then
   echo

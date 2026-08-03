@@ -28,6 +28,7 @@ Multi-device sync is implemented across four files: `packages/core/src/services/
 ## reconcile
 
 `reconcile()` in `apps/web/src/services/reconcile.ts` runs the full cycle:
+
 1. `loadCollectionFromCloud()` — returns early (no error) if null
 2. `loadCollection()` from localStorage
 3. `reconcileCollection(local, remote, tombstoneIds)` — pure merge
@@ -40,6 +41,7 @@ If step 5 throws, the queue is not cleared and the error propagates to `useSync`
 ## useSync
 
 `useSync()` in `apps/web/src/hooks/useSync.ts` manages the sync lifecycle in React:
+
 - Calls `reconcile()` on mount if online
 - Runs `setInterval` every 5 minutes (300,000 ms)
 - Listens to `window` `online`/`offline` events: offline → status `'offline'`, pause interval; online → immediate reconcile, resume interval
@@ -48,5 +50,6 @@ If step 5 throws, the queue is not cleared and the error propagates to `useSync`
 ## Schema
 
 `user_collection` has two sync-specific columns added in migration `20260601000000_sync_columns.sql`:
+
 - `added_at TIMESTAMPTZ NOT NULL DEFAULT NOW()` — persists `OwnedLegoItem.addedAt`
 - `deleted_at TIMESTAMPTZ` — tombstone; `NULL` = live item

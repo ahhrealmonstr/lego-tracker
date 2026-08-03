@@ -32,7 +32,7 @@
 
 ## File Map
 
-```
+```text
 CREATE  scripts/seed-catalog.ts
 CREATE  scripts/seed-catalog.test.ts
 MODIFY  package.json (root)       — add tsx, csv-parse, dotenv devDeps + seed-catalog script
@@ -46,6 +46,7 @@ MODIFY  vitest.config.ts          — include scripts/**/*.test.ts
 ### Task 1: Setup — dependencies, npm script, vitest include
 
 **Files:**
+
 - Modify: `package.json` (root)
 - Modify: `vitest.config.ts`
 
@@ -107,6 +108,7 @@ git commit -m "chore: add tsx, csv-parse, dotenv; add seed-catalog script"
 ### Task 2: Implement and test `parseThemes`
 
 **Files:**
+
 - Create: `scripts/seed-catalog.ts` (initial, exports only)
 - Create: `scripts/seed-catalog.test.ts`
 
@@ -170,6 +172,7 @@ git commit -m "feat(seed): parseThemes — map theme_id to name from themes.csv"
 ### Task 3: Implement and test `mapSetRow`
 
 **Files:**
+
 - Modify: `scripts/seed-catalog.ts`
 - Modify: `scripts/seed-catalog.test.ts`
 
@@ -306,6 +309,7 @@ git commit -m "feat(seed): mapSetRow — map CSV row to catalog_cache shape"
 ### Task 4: Implement and test `parseSets`
 
 **Files:**
+
 - Modify: `scripts/seed-catalog.ts`
 - Modify: `scripts/seed-catalog.test.ts`
 
@@ -393,6 +397,7 @@ git commit -m "feat(seed): parseSets — parse sets.csv with theme resolution"
 ### Task 5: Implement `fetchGzippedCsv`
 
 **Files:**
+
 - Modify: `scripts/seed-catalog.ts`
 
 This function is pure I/O — no unit test. It will be exercised by the smoke test in Task 8.
@@ -446,6 +451,7 @@ git commit -m "feat(seed): fetchGzippedCsv — download and decompress gzip CSV"
 ### Task 6: Implement and test `upsertCatalog`
 
 **Files:**
+
 - Modify: `scripts/seed-catalog.ts`
 - Modify: `scripts/seed-catalog.test.ts`
 
@@ -558,6 +564,7 @@ git commit -m "feat(seed): upsertCatalog — batched upsert to catalog_cache"
 ### Task 7: Wire the main entry point
 
 **Files:**
+
 - Modify: `scripts/seed-catalog.ts`
 
 No new tests — this is the integration entry point. Tested via smoke test in Task 8.
@@ -641,7 +648,7 @@ Go to your Supabase project → Settings → API → `service_role` key (under "
 
 Open `.env` and add:
 
-```
+```dotenv
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 ```
 
@@ -654,7 +661,8 @@ npm run seed-catalog
 ```
 
 Expected output:
-```
+
+```text
 Fetching themes...
   Loaded ~1800 themes
 Fetching sets...
@@ -668,7 +676,9 @@ Upserting to Supabase...
 ```bash
 npx supabase db shell --project-ref <your-project-ref>
 ```
+
 Then run:
+
 ```sql
 SELECT DISTINCT theme FROM catalog_cache WHERE theme NOT LIKE 'Theme %' LIMIT 10;
 ```
@@ -688,7 +698,7 @@ Expected: same count, no errors, no duplicate key violations.
 ## Summary
 
 | Task | Description | Time |
-|---|---|---|
+| --- | --- | --- |
 | 1 | Setup — deps, npm script, vitest config | 3 min |
 | 2 | `parseThemes` — theme_id to name map | 4 min |
 | 3 | `mapSetRow` — CSV row to catalog_cache shape | 5 min |
